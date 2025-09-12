@@ -2,7 +2,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
-
+import { createClient } from "@supabase/supabase-js";
 import { swaggerSpec, swaggerUiOptions } from "./config/swagger";
 import "./docs/openapi";
 
@@ -24,10 +24,10 @@ app.use(
 // API v1 routes
 app.use("/api/v1", apiV1Router);
 
-// const supabase = createClient(
-//   process.env.SUPABASE_URL!,
-//   process.env.SUPABASE_ANON_KEY!
-// );
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_ANON_KEY!
+);
 
 app.get("/", (req, res) => {
   res.send("Hello from Supabase Auth API!");
