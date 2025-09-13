@@ -1,3 +1,4 @@
+import inventoryTransactionsRouter from "./inventory_transactions";
 import { Router } from "express";
 import usersRouter from "./users";
 import authRouter from "./auth";
@@ -19,5 +20,10 @@ router.use("/brands", authenticateSupabaseToken, brandsRouter);
 router.use("/uoms", authenticateSupabaseToken, uomsRouter);
 router.use("/inventory_items", authenticateSupabaseToken, inventoryItemsRouter);
 router.use("/suppliers", authenticateSupabaseToken, suppliersRouter);
+router.use(
+  "/inventory_transactions",
+  authenticateSupabaseToken,
+  inventoryTransactionsRouter
+);
 
 export default router;

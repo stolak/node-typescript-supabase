@@ -73,6 +73,35 @@ CREATE TABLE IF NOT EXISTS suppliers (
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+CREATE TABLE IF NOT EXISTS inventory_transactions (
+    id uuid primary key default gen_random_uuid(),
+    item_id uuid not null references inventory_items(id) on delete cascade, -- which item
+    
+    supplier_id uuid references suppliers(id) on delete set null,           -- supplier (for purchases)
+    receiver_id uuid references auth.users(id) on delete set null,          -- system user receiving
+    supplier_receiver text,                                                 -- supplier’s delivery person
+    
+    transaction_type text not null check (transaction_type in ('purchase','sale')),
+    
+    qty_in numeric(12,2) default 0,       -- quantity coming in (purchase)
+    in_cost numeric(12,2) default 0,      -- purchase cost
+    
+    qty_out numeric(12,2) default 0,      -- quantity going out (sale)
+    out_cost numeric(12,2) default 0,     -- selling cost
+    
+    status text not null default 'pending' 
+        check (status in ('pending','cancelled','deleted','completed')),    -- transaction state
+    
+    reference_no text,                    -- invoice/receipt number
+    notes text,                           -- optional notes
+    
+    transaction_date timestamptz default now(),  -- business transaction date
+    created_by uuid not null references auth.users(id) on delete restrict,  -- who logged it
+    created_at timestamptz default now(),       -- system created time
+    updated_at timestamptz default now()
+);
+
 `;
 
 async function run() {
