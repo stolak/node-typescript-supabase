@@ -57,6 +57,23 @@ create unique index unique_nonnull_sku
 on inventory_items (sku)
 where sku is not null;
 
+create table suppliers (
+    id uuid primary key default gen_random_uuid(),
+    name text not null unique,                         -- Supplier name
+    contact_name text,                                 -- Contact person (optional)
+    email text,                                        -- Contact email
+    phone text,                                        -- Contact phone
+    address text,                                      -- Full address
+    city text,
+    state text,
+    country text,
+    website text,                                      -- Supplier website (optional)
+    notes text,                                        -- Any extra notes
+    created_by uuid references auth.users(id) on delete set null, -- User who created supplier
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
+);
+
 `;
 
 async function run() {

@@ -9,6 +9,7 @@ import "./docs/openapi";
 dotenv.config();
 
 const app = express();
+app.use(express.json()); // Enable JSON body parsing
 const port = process.env.PORT || 3000;
 
 // Import central routes
