@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { authenticateSupabaseToken } from "../middleware/auth";
+import { authenticateSupabaseToken, getUser } from "../middleware/auth";
 
 const router = Router();
 
@@ -23,13 +23,18 @@ const router = Router();
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Token is valid!
+ *                   example: Token validate from supabase!
  *                 user:
  *                   type: object
  *                   description: Decoded JWT payload
  *                   example:
- *                     name: "John Doe"
- *                     email: "user@example.com"
+ *                     id: f6e05715-0dcb-4d22-8712-9e617c966464
+ *                     name: admin@admin.com
+ *                     email: admin@admin.com
+ *                     roles:
+ *                       - admin
+ *                       - editor
+ *                       - super-admin
  *       401:
  *         description: Invalid token
  */
@@ -38,7 +43,7 @@ router.get(
   authenticateSupabaseToken,
   (req: Request, res: Response) => {
     res.json({
-      message: "Token is valid!",
+      message: "Token validate from supabase!",
       user: req.user,
     });
   }
@@ -46,7 +51,7 @@ router.get(
 
 /**
  * @openapi
- * /api/v1/protected:
+ * /api/v1/auth/protected:
  *   get:
  *     summary: Protected endpoint requiring Supabase authentication
  *     description: This endpoint requires a valid Supabase JWT token in the Authorization header
@@ -64,10 +69,18 @@ router.get(
  *               properties:
  *                 message:
  *                   type: string
- *                   example: You are authenticated with Supabase!
+ *                   example: Token is valid!
  *                 user:
  *                   type: object
  *                   description: Decoded JWT payload
+ *                   example:
+ *                     id: f6e05715-0dcb-4d22-8712-9e617c966464
+ *                     name: admin@admin.com
+ *                     email: admin@admin.com
+ *                     roles:
+ *                       - admin
+ *                       - editor
+ *                       - super-admin
  *       401:
  *         description: Unauthorized - Invalid or missing token
  *         content:
@@ -79,15 +92,11 @@ router.get(
  *                   type: string
  *                   example: No token provided
  */
-router.get(
-  "/protected",
-  authenticateSupabaseToken,
-  (req: Request, res: Response) => {
-    res.json({
-      message: "You are authenticated with Supabase!",
-      user: req.user,
-    });
-  }
-);
+router.get("/protected", getUser, (req: Request, res: Response) => {
+  res.json({
+    message: "Valid token",
+    user: req.user,
+  });
+});
 
 export default router;
