@@ -10,6 +10,28 @@ const router = Router();
  *     summary: Get all inventory items
  *     tags:
  *       - InventoryItems
+ *     parameters:
+ *       - in: query
+ *         name: category_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: false
+ *         description: Filter by category ID
+ *       - in: query
+ *         name: sub_category_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: false
+ *         description: Filter by sub-category ID
+ *       - in: query
+ *         name: brand_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: false
+ *         description: Filter by brand ID
  *     responses:
  *       200:
  *         description: List of inventory items
@@ -69,8 +91,13 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/InventoryItem'
  */
-router.get("/", async (_req: Request, res: Response) => {
-  const { data, error } = await supabase.from("inventory_items").select("*");
+router.get("/", async (req: Request, res: Response) => {
+  const { category_id, sub_category_id, brand_id } = req.query;
+  let query = supabase.from("inventory_items").select("*");
+  if (category_id) query = query.eq("category_id", category_id);
+  if (sub_category_id) query = query.eq("sub_category_id", sub_category_id);
+  if (brand_id) query = query.eq("brand_id", brand_id);
+  const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
