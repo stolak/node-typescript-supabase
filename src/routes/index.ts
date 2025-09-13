@@ -7,15 +7,17 @@ import subCategoriesRouter from "./sub_categories";
 import brandsRouter from "./brands";
 import uomsRouter from "./uoms";
 import inventoryItemsRouter from "./inventory_items";
+import suppliersRouter from "./suppliers";
+
 const router = Router();
 
 router.use("/users", authenticateSupabaseToken, usersRouter);
 router.use("/auth", authRouter);
-
 router.use("/categories", authenticateSupabaseToken, categoriesRouter);
 router.use("/sub_categories", authenticateSupabaseToken, subCategoriesRouter);
 router.use("/brands", authenticateSupabaseToken, brandsRouter);
 router.use("/uoms", authenticateSupabaseToken, uomsRouter);
 router.use("/inventory_items", authenticateSupabaseToken, inventoryItemsRouter);
+router.use("/suppliers", authenticateSupabaseToken, suppliersRouter);
 
 export default router;
