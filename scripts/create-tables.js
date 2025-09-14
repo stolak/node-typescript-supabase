@@ -102,6 +102,61 @@ CREATE TABLE IF NOT EXISTS inventory_transactions (
     updated_at timestamptz default now()
 );
 
+CREATE TABLE IF NOT EXISTS school_classes (
+    id uuid primary key default gen_random_uuid(),
+    name text not null unique,                               -- e.g., "Class 1A"
+    class_teacher_id uuid references auth.users(id) on delete set null, -- optional FK to user      
+    status text not null default 'active' 
+        check (status in ('active','inactive','archived')), -- class state
+    created_by uuid not null references auth.users(id) on delete restrict, -- who created it
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
+);
+
+CREATE TABLE IF NOT EXISTS students (
+    id uuid primary key default gen_random_uuid(),
+    admission_number text unique not null,           -- unique student ID/admission number
+    first_name text not null,
+    middle_name text,                                -- optional
+    last_name text not null,
+    gender text not null check (gender in ('male','female','other')),
+    date_of_birth date not null,
+    class_id uuid references school_classes(id) on delete set null, -- current class
+    guardian_name text,                              -- parent/guardian full name
+    guardian_contact text,                           -- phone/email of guardian
+    address text,                                    -- student home address
+    status text not null default 'active' 
+        check (status in ('active','inactive','graduated','transferred','suspended','archived')),
+    created_by uuid not null references auth.users(id) on delete restrict, -- user who registered student
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
+);
+
+CREATE TABLE IF NOT EXISTS academic_session_terms (
+    id uuid primary key default gen_random_uuid(),
+    session text not null,                 -- e.g., "2025/2026"
+    name text not null,                    -- e.g., "First Term"
+    start_date date not null,
+    end_date date not null,
+    status text not null default 'active'
+        check (status in ('active','inactive','archived')),
+    created_at timestamptz default now(),
+    unique (session, name)                 -- prevent duplicate term names per session
+);
+CREATE TABLE IF NOT EXISTS class_inventory_entitlements (
+    id uuid primary key default gen_random_uuid(),
+    class_id uuid not null references school_classes(id) on delete cascade,
+    inventory_item_id uuid not null references inventory_items(id) on delete cascade,
+    session_term_id uuid not null references academic_session_terms(id) on delete cascade,
+    quantity int not null check (quantity >= 0),  -- how many items the class is eligible to get
+    notes text,                                  -- optional remarks (e.g., "core textbook only")
+    created_by uuid not null references auth.users(id) on delete restrict,
+    created_at timestamptz default now(),
+    updated_at timestamptz default now(),
+    unique (class_id, inventory_item_id, session_term_id) -- prevent duplicates
+);
+
+
 `;
 
 async function run() {
