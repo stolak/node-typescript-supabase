@@ -45,14 +45,12 @@ router.get("/", async (_req: Request, res: Response) => {
 
 router.post("/", async (req: Request, res: Response) => {
   const body = req.body;
-  if (!body.name || !body.status || !body.created_by) {
-    return res
-      .status(400)
-      .json({ error: "name, status, and created_by are required" });
+  if (!body.name || !body.status) {
+    return res.status(400).json({ error: "name and status are required" });
   }
   const { data, error } = await supabase
     .from("school_classes")
-    .insert([{ ...body }])
+    .insert([{ ...body, created_by: req.user?.id }])
     .select()
     .single();
   if (error) return res.status(500).json({ error: error.message });

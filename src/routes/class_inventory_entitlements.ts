@@ -10,6 +10,28 @@ const router = Router();
  *     summary: Get all class inventory entitlements
  *     tags:
  *       - ClassInventoryEntitlements
+ *     parameters:
+ *       - in: query
+ *         name: class_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: false
+ *         description: Filter by class_id
+ *       - in: query
+ *         name: inventory_item_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: false
+ *         description: Filter by inventory_item_id
+ *       - in: query
+ *         name: session_term_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: false
+ *         description: Filter by session_term_id
  *     responses:
  *       200:
  *         description: List of class inventory entitlements
@@ -37,14 +59,19 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/ClassInventoryEntitlement'
  */
-router.get("/", async (_req: Request, res: Response) => {
-  const { data, error } = await supabase
-    .from("class_inventory_entitlements")
-    .select("*");
+router.get("/", async (req: Request, res: Response) => {
+  const { class_id, inventory_item_id, session_term_id } = req.query;
+  let query = supabase.from("class_inventory_entitlements").select("*");
+  if (class_id) query = query.eq("class_id", class_id);
+  if (inventory_item_id)
+    query = query.eq("inventory_item_id", inventory_item_id);
+  if (session_term_id) query = query.eq("session_term_id", session_term_id);
+  const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
+// Single create endpoint (unchanged)
 router.post("/", async (req: Request, res: Response) => {
   const body = req.body;
   if (
@@ -52,23 +79,83 @@ router.post("/", async (req: Request, res: Response) => {
     !body.inventory_item_id ||
     !body.session_term_id ||
     body.quantity === undefined ||
-    body.quantity === null ||
-    !body.created_by
+    body.quantity === null
   ) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "class_id, inventory_item_id, session_term_id, quantity, and created_by are required",
-      });
+    return res.status(400).json({
+      error:
+        "class_id, inventory_item_id, session_term_id, quantity, and created_by are required",
+    });
   }
   const { data, error } = await supabase
     .from("class_inventory_entitlements")
-    .insert([{ ...body }])
+    .insert([{ ...body, created_by: req.user?.id }])
     .select()
     .single();
   if (error) return res.status(500).json({ error: error.message });
   res.status(201).json(data);
+});
+
+/**
+ * @openapi
+ * /api/v1/class_inventory_entitlements/bulk_upsert:
+ *   post:
+ *     summary: Bulk upsert class inventory entitlements
+ *     tags:
+ *       - ClassInventoryEntitlements
+ *     description: Upsert (insert or update) multiple class inventory entitlements at once. Records are matched on (class_id, inventory_item_id, session_term_id).
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *               $ref: '#/components/schemas/ClassInventoryEntitlementInput'
+ *     responses:
+ *       200:
+ *         description: Bulk upserted class inventory entitlements
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/ClassInventoryEntitlement'
+ */
+router.post("/bulk_upsert", async (req: Request, res: Response) => {
+  const records = req.body;
+  if (!Array.isArray(records) || records.length === 0) {
+    return res
+      .status(400)
+      .json({ error: "Request body must be a non-empty array" });
+  }
+  // Validate each record
+  const finalRecords = records.map((rec) => ({
+    ...rec,
+    created_by: req.user?.id,
+  }));
+  for (const rec of finalRecords) {
+    if (
+      !rec.class_id ||
+      !rec.inventory_item_id ||
+      !rec.session_term_id ||
+      rec.quantity === undefined ||
+      rec.quantity === null
+    ) {
+      return res.status(400).json({
+        error:
+          "Each record must have class_id, inventory_item_id, session_term_id, and quantity",
+      });
+    }
+  }
+  // Upsert using Supabase (PostgREST) - match on unique constraint
+  const { data, error } = await supabase
+    .from("class_inventory_entitlements")
+    .upsert(finalRecords, {
+      onConflict: "class_id,inventory_item_id,session_term_id",
+    })
+    .select();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
 /**
@@ -158,11 +245,9 @@ router.put("/:id", async (req: Request, res: Response) => {
     .select()
     .single();
   if (error)
-    return res
-      .status(404)
-      .json({
-        error: "Class inventory entitlement not found or update failed",
-      });
+    return res.status(404).json({
+      error: "Class inventory entitlement not found or update failed",
+    });
   res.json(data);
 });
 
@@ -173,11 +258,9 @@ router.delete("/:id", async (req: Request, res: Response) => {
     .delete()
     .eq("id", id);
   if (error)
-    return res
-      .status(404)
-      .json({
-        error: "Class inventory entitlement not found or delete failed",
-      });
+    return res.status(404).json({
+      error: "Class inventory entitlement not found or delete failed",
+    });
   res.status(204).send();
 });
 
