@@ -309,6 +309,83 @@ router.put("/distributions/:id", async (req: Request, res: Response) => {
   res.json(data);
 });
 
+// ...existing code...
+
+/**
+ * @openapi
+ * /api/v1/inventory_transactions/distributions/bulk_upsert:
+ *   post:
+ *     summary: Bulk inventory distributions
+ *     tags:
+ *       - ClassInventoryDistributions
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *               $ref: '#/components/schemas/ClassInventoryDistributionInput'
+ *     responses:
+ *       200:
+ *         description: Bulk upserted class inventory distributions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/ClassInventoryDistribution'
+ */
+
+router.post(
+  "/distributions/bulk_upsert",
+  async (req: Request, res: Response) => {
+    const records = req.body;
+    if (!Array.isArray(records) || records.length === 0) {
+      return res
+        .status(400)
+        .json({ error: "Request body must be a non-empty array" });
+    }
+    // Validate each record
+    for (const rec of records) {
+      if (
+        !rec.class_id ||
+        !rec.inventory_item_id ||
+        !rec.session_term_id ||
+        !rec.distributed_quantity ||
+        !rec.created_by
+      ) {
+        return res.status(400).json({
+          error:
+            "Each record must have class_id, inventory_item_id, session_term_id, distributed_quantity, and created_by",
+        });
+      }
+      if (rec.distributed_quantity <= 0) {
+        return res.status(400).json({
+          error: "distributed_quantity must be greater than 0 for all records",
+        });
+      }
+    }
+    // Add timestamps and user if needed
+    const now = new Date().toISOString();
+    const upsertData = records.map((rec) => ({
+      ...rec,
+      distribution_date: rec.distribution_date || now,
+      created_by: req.user?.id || rec.created_by,
+      updated_at: now,
+    }));
+    // Upsert on (class_id, inventory_item_id, session_term_id)
+    const { data, error } = await supabase
+      .from("class_inventory_distributions")
+      .upsert(upsertData, {
+        onConflict: "class_id,inventory_item_id,session_term_id",
+      })
+      .select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  }
+);
+
 /**
  * @openapi
  * components:
