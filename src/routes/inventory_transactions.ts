@@ -41,45 +41,53 @@ router.get("/", async (_req: Request, res: Response) => {
   const { data, error } = await supabase
     .from("inventory_transactions")
     .select("*");
+
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
 router.post("/", async (req: Request, res: Response) => {
   const body = req.body;
-  if (!body.item_id || !body.transaction_type || !body.created_by) {
+
+  if (!body.item_id || !body.transaction_type) {
     return res.status(400).json({
-      error: "item_id, transaction_type, and created_by are required",
+      error: "item_id and transaction_type are required",
     });
   }
+
   if (!["purchase", "sale"].includes(body.transaction_type)) {
     return res
       .status(400)
       .json({ error: "transaction_type must be 'purchase' or 'sale'" });
   }
+
   if (
     body.transaction_type === "sale" &&
-    (body.qty_out === undefined || body.qty_out === null || body.qty_out === 0)
+    (!body.qty_out || body.qty_out <= 0)
   ) {
     return res.status(400).json({ error: "qty_out is required for sales" });
   }
+
   if (
     body.transaction_type === "purchase" &&
-    (body.qty_in === undefined || body.qty_in === null || body.qty_in === 0)
+    (!body.qty_in || body.qty_in <= 0)
   ) {
     return res.status(400).json({ error: "qty_in is required for purchases" });
   }
+
   if ((body.qty_in ?? 0) > 0 && (body.qty_out ?? 0) > 0) {
     return res.status(400).json({
       error:
         "Both qty_in and qty_out cannot be greater than 0 in a single transaction",
     });
   }
+
   const { data, error } = await supabase
     .from("inventory_transactions")
-    .insert([{ ...body, created_by: req.user?.id || "" }])
+    .insert([{ ...body, created_by: req.user?.id || body.created_by || "" }])
     .select()
     .single();
+
   if (error) return res.status(500).json({ error: error.message });
   res.status(201).json(data);
 });
@@ -154,6 +162,7 @@ router.get("/:id", async (req: Request, res: Response) => {
     .select("*")
     .eq("id", id)
     .single();
+
   if (error)
     return res.status(404).json({ error: "Inventory transaction not found" });
   res.json(data);
@@ -162,16 +171,19 @@ router.get("/:id", async (req: Request, res: Response) => {
 router.put("/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
   const body = req.body;
+
   const { data, error } = await supabase
     .from("inventory_transactions")
     .update({ ...body })
     .eq("id", id)
     .select()
     .single();
+
   if (error)
     return res
       .status(404)
       .json({ error: "Inventory transaction not found or update failed" });
+
   res.json(data);
 });
 
@@ -181,19 +193,194 @@ router.delete("/:id", async (req: Request, res: Response) => {
     .from("inventory_transactions")
     .delete()
     .eq("id", id);
+
   if (error)
     return res
       .status(404)
       .json({ error: "Inventory transaction not found or delete failed" });
+
   res.status(204).send();
 });
 
-export default router;
+/**
+ * @openapi
+ * /api/v1/inventory_transactions/distributions:
+ *   post:
+ *     summary: Distribute inventory items to to the specified class
+ *     tags:
+ *       - ClassInventoryDistributions
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ClassInventoryDistributionInput'
+ *     responses:
+ *       201:
+ *         description: Class inventory distribution created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ClassInventoryDistribution'
+ */
+router.post("/distributions", async (req: Request, res: Response) => {
+  const body = req.body;
+
+  if (
+    !body.class_id ||
+    !body.inventory_item_id ||
+    !body.session_term_id ||
+    !body.distributed_quantity
+  ) {
+    return res.status(400).json({
+      error:
+        "class_id, inventory_item_id, session_term_id, and distributed_quantity are required",
+    });
+  }
+
+  if (body.distributed_quantity <= 0) {
+    return res
+      .status(400)
+      .json({ error: "distributed_quantity must be greater than 0" });
+  }
+
+  const insertData = {
+    ...body,
+    distribution_date: body.distribution_date || new Date().toISOString(),
+    created_by: req.user?.id || body.created_by || "",
+  };
+
+  const { data, error } = await supabase
+    .from("class_inventory_distributions")
+    .insert([insertData])
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json(data);
+});
+
+/**
+ * @openapi
+ * /api/v1/inventory_transactions/distributions/{id}:
+ *   put:
+ *     summary: Update inventory distribution by ID
+ *     tags:
+ *       - ClassInventoryDistributions
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ClassInventoryDistributionInput'
+ *     responses:
+ *       200:
+ *         description: Class inventory distribution updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ClassInventoryDistribution'
+ *       404:
+ *         description: Class inventory distribution not found
+ */
+router.put("/distributions/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const body = req.body;
+
+  const { data, error } = await supabase
+    .from("class_inventory_distributions")
+    .update({ ...body, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    return res.status(404).json({
+      error: "Class inventory distribution not found or update failed",
+    });
+  }
+
+  res.json(data);
+});
 
 /**
  * @openapi
  * components:
  *   schemas:
+ *     ClassInventoryDistribution:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         class_id:
+ *           type: string
+ *           format: uuid
+ *         inventory_item_id:
+ *           type: string
+ *           format: uuid
+ *         session_term_id:
+ *           type: string
+ *           format: uuid
+ *         distributed_quantity:
+ *           type: integer
+ *         distribution_date:
+ *           type: string
+ *           format: date-time
+ *         received_by:
+ *           type: string
+ *           format: uuid
+ *         receiver_name:
+ *           type: string
+ *         notes:
+ *           type: string
+ *         created_by:
+ *           type: string
+ *           format: uuid
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *     ClassInventoryDistributionInput:
+ *       type: object
+ *       required:
+ *         - class_id
+ *         - inventory_item_id
+ *         - session_term_id
+ *         - distributed_quantity
+ *       properties:
+ *         class_id:
+ *           type: string
+ *           format: uuid
+ *         inventory_item_id:
+ *           type: string
+ *           format: uuid
+ *         session_term_id:
+ *           type: string
+ *           format: uuid
+ *         distributed_quantity:
+ *           type: integer
+ *         distribution_date:
+ *           type: string
+ *           format: date-time
+ *         received_by:
+ *           type: string
+ *           format: uuid
+ *         receiver_name:
+ *           type: string
+ *         notes:
+ *           type: string
+ *         created_by:
+ *           type: string
+ *           format: uuid
  *     InventoryTransaction:
  *       type: object
  *       properties:
@@ -283,3 +470,5 @@ export default router;
  *           type: string
  *           format: uuid
  */
+
+export default router;
