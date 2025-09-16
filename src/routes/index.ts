@@ -1,3 +1,5 @@
+import classTeachersRouter from "./class_teachers";
+
 import schoolClassesRouter from "./school_classes";
 import studentsRouter from "./students";
 import inventoryTransactionsRouter from "./inventory_transactions";
@@ -42,5 +44,6 @@ router.use(
   authenticateSupabaseToken,
   classInventoryEntitlementsRouter
 );
+router.use("/class_teachers", authenticateSupabaseToken, classTeachersRouter);
 
 export default router;

@@ -156,6 +156,78 @@ CREATE TABLE IF NOT EXISTS class_inventory_entitlements (
     unique (class_id, inventory_item_id, session_term_id) -- prevent duplicates
 );
 
+CREATE TABLE IF NOT EXISTS class_inventory_distributions (
+    id uuid primary key default gen_random_uuid(),
+
+    class_id uuid not null references school_classes(id) on delete cascade,
+    inventory_item_id uuid not null references inventory_items(id) on delete cascade,
+    session_term_id uuid not null references academic_session_terms(id) on delete cascade,
+
+    distributed_quantity int not null check (distributed_quantity > 0),
+    distribution_date timestamptz not null default now(),
+
+    received_by uuid references auth.users(id) on delete set null, -- teacher/staff who acknowledged
+    receiver_name text,                                           -- fallback if no user record
+    notes text,                                                   -- optional remarks (e.g., "partial delivery")
+
+    created_by uuid not null references auth.users(id) on delete restrict,
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
+);
+CREATE TABLE IF NOT EXISTS student_inventory_log (
+    id uuid primary key default gen_random_uuid(),
+
+    student_id uuid not null references students(id) on delete cascade,
+    class_id uuid not null references school_classes(id) on delete cascade,
+    session_term_id uuid not null references academic_session_terms(id) on delete cascade,
+    inventory_item_id uuid not null references inventory_items(id) on delete cascade,
+
+    qty int not null check (qty > 0),          -- number of items given to the student
+    eligible boolean not null default true,    -- whether student was entitled
+    received boolean not null default false,   -- whether collected
+    received_date timestamptz,                 -- when collected
+
+    given_by uuid references auth.users(id) on delete set null,  -- teacher/class rep
+    created_by uuid not null references auth.users(id) on delete restrict, -- admin entry
+
+    created_at timestamptz default now(),
+    updated_at timestamptz default now(),
+
+    unique (student_id, session_term_id, inventory_item_id) 
+    -- prevents duplicate entries for same student/item/term
+);
+
+CREATE TABLE IF NOT EXISTS class_teachers (
+    id uuid primary key default gen_random_uuid(),
+
+    class_id uuid references school_classes(id) on delete set null,
+        -- nullable: teacher may not be assigned to a class right now
+
+    session_term_id uuid references academic_session_terms(id) on delete set null,
+        -- nullable: assignment may not be tied to a session/term
+
+    teacher_id uuid not null references auth.users(id) on delete restrict, 
+        -- the assigned teacher (must exist, cannot delete if assigned)
+
+    email text not null unique,
+        -- each teacher must have a unique email
+    name text not null,
+        -- full name of the teacher
+
+    role text not null default 'class_teacher'
+        check (role in ('class_teacher', 'assistant_teacher', 'subject_teacher')), 
+
+    status text not null default 'active'
+        check (status in ('active','inactive','archived')),
+
+    assigned_at timestamptz default now(),
+    unassigned_at timestamptz, -- nullable, when teacher left the class
+
+    created_by uuid not null references auth.users(id) on delete restrict,
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
+);
+
 
 `;
 
