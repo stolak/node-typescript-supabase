@@ -309,8 +309,6 @@ router.put("/distributions/:id", async (req: Request, res: Response) => {
   res.json(data);
 });
 
-// ...existing code...
-
 /**
  * @openapi
  * /api/v1/inventory_transactions/distributions/bulk_upsert:
