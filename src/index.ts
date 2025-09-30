@@ -1,6 +1,7 @@
 /// <reference path="./types/express.d.ts" />
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 import swaggerUi from "swagger-ui-express";
 import { createClient } from "@supabase/supabase-js";
 import { swaggerSpec, swaggerUiOptions } from "./config/swagger";
@@ -9,6 +10,7 @@ import "./docs/openapi";
 dotenv.config();
 
 const app = express();
+app.use(cors());
 app.use(express.json()); // Enable JSON body parsing
 const port = process.env.PORT || 3000;
 
