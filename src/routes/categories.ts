@@ -49,11 +49,12 @@ router.get("/", async (_req: Request, res: Response) => {
 });
 
 router.post("/", async (req: Request, res: Response) => {
-  const { name } = req.body;
+  const { name, description } = req.body;
+
   if (!name) return res.status(400).json({ error: "Name is required" });
   const { data, error } = await supabase
     .from("categories")
-    .insert([{ name }])
+    .insert([{ name, description }])
     .select()
     .single();
   if (error) return res.status(500).json({ error: error.message });
@@ -139,10 +140,10 @@ router.get("/:id", async (req: Request, res: Response) => {
 
 router.put("/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name } = req.body;
+  const { name, description } = req.body;
   const { data, error } = await supabase
     .from("categories")
-    .update({ name })
+    .update({ name, ...(description && { description }) })
     .eq("id", id)
     .select()
     .single();
@@ -156,11 +157,12 @@ router.put("/:id", async (req: Request, res: Response) => {
 router.delete("/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
   const { error } = await supabase.from("categories").delete().eq("id", id);
-  if (error)
+  if (error) {
     return res
       .status(404)
       .json({ error: "Category not found or delete failed" });
-  res.status(204).send();
+  }
+  res.status(200).json({ message: "Category deleted successfully" });
 });
 
 export default router;
@@ -176,6 +178,8 @@ export default router;
  *           type: string
  *           format: uuid
  *         name:
+ *           type: string
+ *         description:
  *           type: string
  *         created_at:
  *           type: string

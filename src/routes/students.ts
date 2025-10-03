@@ -196,7 +196,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
     return res
       .status(404)
       .json({ error: "Student not found or delete failed" });
-  res.status(204).send();
+  res.status(200).json({ message: "Student deleted successfully" });
 });
 
 export default router;

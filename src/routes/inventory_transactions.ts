@@ -199,7 +199,9 @@ router.delete("/:id", async (req: Request, res: Response) => {
       .status(404)
       .json({ error: "Inventory transaction not found or delete failed" });
 
-  res.status(204).send();
+  res
+    .status(200)
+    .json({ message: "Inventory transaction deleted successfully" });
 });
 
 /**

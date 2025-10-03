@@ -156,7 +156,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
   const { error } = await supabase.from("brands").delete().eq("id", id);
   if (error)
     return res.status(404).json({ error: "Brand not found or delete failed" });
-  res.status(204).send();
+  res.status(200).json({ message: "Brand deleted successfully" });
 });
 
 export default router;

@@ -167,7 +167,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
     return res
       .status(404)
       .json({ error: "Unit of measure not found or delete failed" });
-  res.status(204).send();
+  res.status(200).json({ message: "Unit of measure deleted successfully" });
 });
 
 export default router;

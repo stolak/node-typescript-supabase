@@ -5,21 +5,49 @@ require("dotenv").config({ path: ".env" });
 const connectionString = process.env.SUPABASE_DB_URL;
 
 const sql = `
+-- Categories table
 CREATE TABLE IF NOT EXISTS categories (
   id uuid primary key default gen_random_uuid(),
   name text unique not null,
+  description text, -- optional description
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
+-- ensure description column exists in categories
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name='categories' AND column_name='description'
+  ) THEN
+    ALTER TABLE categories ADD COLUMN description text;
+  END IF;
+END $$;
+
+-- Sub-categories table
 CREATE TABLE IF NOT EXISTS sub_categories (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  description text, -- optional description
   category_id uuid references categories(id) on delete set null,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
   unique(name, category_id)
 );
+
+-- ensure description column exists in sub_categories
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name='sub_categories' AND column_name='description'
+  ) THEN
+    ALTER TABLE sub_categories ADD COLUMN description text;
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS brands (
   id uuid primary key default gen_random_uuid(),
