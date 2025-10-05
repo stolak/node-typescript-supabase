@@ -93,7 +93,11 @@ const router = Router();
  */
 router.get("/", async (req: Request, res: Response) => {
   const { category_id, sub_category_id, brand_id } = req.query;
-  let query = supabase.from("inventory_items").select("*");
+  let query = supabase
+    .from("inventory_items")
+    .select(
+      `*, categories(id, name),sub_categories(id, name), uoms(id, name), brands(id, name)`
+    );
   if (category_id) query = query.eq("category_id", category_id);
   if (sub_category_id) query = query.eq("sub_category_id", sub_category_id);
   if (brand_id) query = query.eq("brand_id", brand_id);
@@ -114,17 +118,7 @@ router.post("/", async (req: Request, res: Response) => {
     cost_price,
     selling_price,
   } = req.body;
-  console.log({
-    sku,
-    name,
-    category_id,
-    sub_category_id,
-    brand_id,
-    uom_id,
-    barcode,
-    cost_price,
-    selling_price,
-  });
+
   if (!name || !category_id)
     return res.status(400).json({ error: "Missing required fields" });
   const { data, error } = await supabase

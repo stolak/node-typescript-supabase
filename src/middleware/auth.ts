@@ -59,7 +59,6 @@ export function authorize(requiredRole: string[]) {
     if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    console.log(req.user);
     const roles: string[] = req.user?.roles || [];
     if (!roles.some((role) => requiredRole.includes(role))) {
       return res.status(403).json({ error: "Forbidden" });

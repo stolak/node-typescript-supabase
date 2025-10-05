@@ -52,7 +52,6 @@ router.post("/login", async (req: Request, res: Response) => {
       }
     );
     const data = await response.json();
-    console.log(data);
     if (!response.ok) {
       return res
         .status(401)

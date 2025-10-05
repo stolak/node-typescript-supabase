@@ -47,7 +47,9 @@ const router = Router();
  *               $ref: '#/components/schemas/SubCategory'
  */
 router.get("/", async (_req: Request, res: Response) => {
-  const { data, error } = await supabase.from("sub_categories").select("*");
+  const { data, error } = await supabase
+    .from("sub_categories")
+    .select(`*, categories(id, name)`);
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });

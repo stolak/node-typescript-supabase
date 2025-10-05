@@ -75,6 +75,9 @@ CREATE TABLE IF NOT EXISTS inventory_items (
   barcode text unique,
   cost_price numeric(12,2) not null,
   selling_price numeric(12,2) not null,
+  low_stock_threshold INTEGER DEFAULT 0 CHECK (low_stock_threshold >= 0),
+  -- optional: current quantity (useful for comparison)
+  current_stock INTEGER DEFAULT 0 CHECK (current_stock >= 0),
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
@@ -85,6 +88,34 @@ CREATE UNIQUE INDEX IF NOT EXISTS unique_nonnull_sku
 ON inventory_items (sku)
 WHERE sku IS NOT NULL;
 
+
+-- Ensure low_stock_threshold column exists
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'inventory_items'
+      AND column_name = 'low_stock_threshold'
+  ) THEN
+    ALTER TABLE inventory_items
+    ADD COLUMN low_stock_threshold INTEGER DEFAULT 0 CHECK (low_stock_threshold >= 0);
+  END IF;
+END $$;
+
+-- Ensure current_stock column exists
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'inventory_items'
+      AND column_name = 'current_stock'
+  ) THEN
+    ALTER TABLE inventory_items
+    ADD COLUMN current_stock INTEGER DEFAULT 0 CHECK (current_stock >= 0);
+  END IF;
+END $$;
 CREATE TABLE IF NOT EXISTS suppliers (
   id uuid primary key default gen_random_uuid(),
   name text not null unique,
