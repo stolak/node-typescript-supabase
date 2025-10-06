@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS inventory_items (
   sub_category_id uuid references sub_categories(id) on delete set null,
   brand_id uuid references brands(id) on delete set null,
   uom_id uuid references uoms(id) on delete restrict,
-  barcode text unique,
+  barcode text,
   cost_price numeric(12,2) not null,
   selling_price numeric(12,2) not null,
   low_stock_threshold INTEGER DEFAULT 0 CHECK (low_stock_threshold >= 0),
@@ -83,10 +83,32 @@ CREATE TABLE IF NOT EXISTS inventory_items (
   updated_at timestamptz default now()
 );
 
+-- Ensure barcode column exists
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'inventory_items'
+      AND column_name = 'barcode'
+  ) THEN
+    ALTER TABLE inventory_items
+    ADD COLUMN barcode text;
+  END IF;
+END $$;
+  
+  
 -- enforce uniqueness of sku only when it is not null
 CREATE UNIQUE INDEX IF NOT EXISTS unique_nonnull_sku
 ON inventory_items (sku)
 WHERE sku IS NOT NULL;
+
+
+-- enforce uniqueness of barcode only when it is not null
+CREATE UNIQUE INDEX IF NOT EXISTS unique_nonnull_barcode
+ON inventory_items (barcode)
+WHERE barcode IS NOT NULL;
+
 
 
 -- Ensure low_stock_threshold column exists

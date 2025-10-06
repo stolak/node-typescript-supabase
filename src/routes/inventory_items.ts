@@ -117,6 +117,8 @@ router.post("/", async (req: Request, res: Response) => {
     barcode,
     cost_price,
     selling_price,
+    current_stock,
+    low_stock_threshold,
   } = req.body;
 
   if (!name || !category_id)
@@ -135,6 +137,8 @@ router.post("/", async (req: Request, res: Response) => {
         cost_price,
         selling_price,
         created_by: req.user?.id || "",
+        current_stock,
+        low_stock_threshold,
       },
     ])
     .select()
