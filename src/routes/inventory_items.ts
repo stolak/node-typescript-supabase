@@ -94,7 +94,8 @@ const router = Router();
 router.get("/", async (req: Request, res: Response) => {
   const { category_id, sub_category_id, brand_id } = req.query;
   let query = supabase
-    .from("inventory_items")
+    // .from("inventory_items")
+    .from("inventory_item_summary")
     .select(
       `*, categories(id, name),sub_categories(id, name), uoms(id, name), brands(id, name)`
     );
@@ -117,7 +118,6 @@ router.post("/", async (req: Request, res: Response) => {
     barcode,
     cost_price,
     selling_price,
-    current_stock,
     low_stock_threshold,
   } = req.body;
 
@@ -137,7 +137,6 @@ router.post("/", async (req: Request, res: Response) => {
         cost_price,
         selling_price,
         created_by: req.user?.id || "",
-        current_stock,
         low_stock_threshold,
       },
     ])

@@ -38,11 +38,16 @@ const router = Router();
  *               $ref: '#/components/schemas/InventoryTransaction'
  */
 router.get("/", async (_req: Request, res: Response) => {
+  console.log("inventory_transactions");
   const { data, error } = await supabase
     .from("inventory_transactions")
-    .select("*");
+    .select(`*, inventory_items(id, name), suppliers(id, name)`);
 
-  if (error) return res.status(500).json({ error: error.message });
+  // console.log("data", data);
+  if (error) {
+    console.log("error", error);
+    return res.status(500).json({ error: error.message });
+  }
   res.json(data);
 });
 
@@ -257,6 +262,27 @@ router.post("/distributions", async (req: Request, res: Response) => {
     .insert([insertData])
     .select()
     .single();
+  //i current stock of inventory transaction table for sale
+  const { data: inventoryData, error: inventoryError } = await supabase
+    .from("inventory_transactions")
+    .insert([
+      {
+        item_id: insertData.inventory_item_id,
+        receiver_id: insertData.received_by,
+        transaction_type: "sale",
+        qty_out: insertData.distributed_quantity,
+        out_cost: insertData?.out_cost || 0,
+        status: "completed",
+        reference_no: insertData?.reference_no,
+        notes: insertData?.notes,
+        transaction_date: insertData.distribution_date,
+        created_by: insertData.created_by,
+      },
+    ])
+    .select()
+    .single();
+  if (inventoryError)
+    return res.status(500).json({ error: inventoryError.message });
 
   if (error) return res.status(500).json({ error: error.message });
   res.status(201).json(data);

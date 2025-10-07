@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS inventory_items (
   selling_price numeric(12,2) not null,
   low_stock_threshold INTEGER DEFAULT 0 CHECK (low_stock_threshold >= 0),
   -- optional: current quantity (useful for comparison)
-  current_stock INTEGER DEFAULT 0 CHECK (current_stock >= 0),
+
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
@@ -125,19 +125,7 @@ BEGIN
   END IF;
 END $$;
 
--- Ensure current_stock column exists
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_name = 'inventory_items'
-      AND column_name = 'current_stock'
-  ) THEN
-    ALTER TABLE inventory_items
-    ADD COLUMN current_stock INTEGER DEFAULT 0 CHECK (current_stock >= 0);
-  END IF;
-END $$;
+
 CREATE TABLE IF NOT EXISTS suppliers (
   id uuid primary key default gen_random_uuid(),
   name text not null unique,
@@ -309,6 +297,25 @@ CREATE TABLE IF NOT EXISTS class_teachers (
     updated_at timestamptz default now()
 );
 
+DROP VIEW IF EXISTS inventory_item_summary;
+CREATE OR REPLACE VIEW inventory_item_summary AS
+SELECT 
+  i.*,
+  c.name AS category_name,
+  sc.name AS sub_category_name,
+  b.name AS brand_name,
+  u.name AS uom_name,
+  COALESCE(SUM(t.qty_in) - SUM(t.qty_out), 0) AS current_stock,
+  COALESCE(SUM(t.in_cost), 0) AS total_in_cost,
+  COALESCE(SUM(t.out_cost), 0) AS total_out_cost
+FROM inventory_items i
+LEFT JOIN categories c ON c.id = i.category_id
+LEFT JOIN sub_categories sc ON sc.id = i.sub_category_id
+LEFT JOIN brands b ON b.id = i.brand_id
+LEFT JOIN uoms u ON u.id = i.uom_id
+LEFT JOIN inventory_transactions t 
+  ON t.item_id = i.id AND t.status = 'completed'
+GROUP BY i.id, c.name, sc.name, b.name, u.name;
 
 `;
 
