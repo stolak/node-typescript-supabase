@@ -38,14 +38,11 @@ const router = Router();
  *               $ref: '#/components/schemas/InventoryTransaction'
  */
 router.get("/", async (_req: Request, res: Response) => {
-  console.log("inventory_transactions");
   const { data, error } = await supabase
     .from("inventory_transactions")
     .select(`*, inventory_items(id, name), suppliers(id, name)`);
 
-  // console.log("data", data);
   if (error) {
-    console.log("error", error);
     return res.status(500).json({ error: error.message });
   }
   res.json(data);
@@ -89,7 +86,13 @@ router.post("/", async (req: Request, res: Response) => {
 
   const { data, error } = await supabase
     .from("inventory_transactions")
-    .insert([{ ...body, created_by: req.user?.id || body.created_by || "" }])
+    .insert([
+      {
+        ...body,
+        receiver_id: req.user?.id || body.receiver_id || "",
+        created_by: req.user?.id || body.created_by || "",
+      },
+    ])
     .select()
     .single();
 

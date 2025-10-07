@@ -61,7 +61,7 @@ const router = Router();
  */
 router.get("/", async (req: Request, res: Response) => {
   const { status, class_id, gender } = req.query;
-  let query = supabase.from("students").select("*");
+  let query = supabase.from("students").select(`*, school_classes(id, name)`);
   if (status) query = query.eq("status", status);
   if (class_id) query = query.eq("class_id", class_id);
   if (gender) query = query.eq("gender", gender);
@@ -77,8 +77,7 @@ router.post("/", async (req: Request, res: Response) => {
     !body.first_name ||
     !body.last_name ||
     !body.gender ||
-    !body.date_of_birth ||
-    !body.created_by
+    !body.date_of_birth
   ) {
     return res.status(400).json({
       error:
@@ -92,7 +91,7 @@ router.post("/", async (req: Request, res: Response) => {
   }
   const { data, error } = await supabase
     .from("students")
-    .insert([{ ...body }])
+    .insert([{ ...body, created_by: req.user?.id || body?.created_by || "" }])
     .select()
     .single();
   if (error) return res.status(500).json({ error: error.message });
