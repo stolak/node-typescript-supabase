@@ -61,7 +61,12 @@ const router = Router();
  */
 router.get("/", async (req: Request, res: Response) => {
   const { class_id, inventory_item_id, session_term_id } = req.query;
-  let query = supabase.from("class_inventory_entitlements").select("*");
+  let query = supabase.from("class_inventory_entitlements").select(`
+    *,
+    inventory_items(id, name, categories(id, name)),
+    academic_session_terms(id, name),
+    school_classes(id, name)
+  `);
   if (class_id) query = query.eq("class_id", class_id);
   if (inventory_item_id)
     query = query.eq("inventory_item_id", inventory_item_id);
@@ -225,7 +230,14 @@ router.get("/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
   const { data, error } = await supabase
     .from("class_inventory_entitlements")
-    .select("*")
+    .select(
+      `
+      *,
+      inventory_items(id, name, categories(id, name)),
+      session_terms(id, name),
+      classes(id, name)
+    `
+    )
     .eq("id", id)
     .single();
   if (error)

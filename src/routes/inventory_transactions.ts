@@ -235,7 +235,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
  */
 router.post("/distributions", async (req: Request, res: Response) => {
   const body = req.body;
-
+  console.log(body);
   if (
     !body.class_id ||
     !body.inventory_item_id ||
