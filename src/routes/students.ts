@@ -92,7 +92,7 @@ router.post("/", async (req: Request, res: Response) => {
   const { data, error } = await supabase
     .from("students")
     .insert([{ ...body, created_by: req.user?.id || body?.created_by || "" }])
-    .select()
+    .select(`*, school_classes(id, name)`)
     .single();
   if (error) return res.status(500).json({ error: error.message });
   res.status(201).json(data);
@@ -165,7 +165,7 @@ router.get("/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
   const { data, error } = await supabase
     .from("students")
-    .select("*")
+    .select(`*, school_classes(id, name)`)
     .eq("id", id)
     .single();
   if (error) return res.status(404).json({ error: "Student not found" });
@@ -245,6 +245,8 @@ export default router;
  *         updated_at:
  *           type: string
  *           format: date-time
+ *         school_classes:
+ *           $ref: '#/components/schemas/SchoolClass'
  *     StudentInput:
  *       type: object
  *       required:
@@ -253,8 +255,6 @@ export default router;
  *         - last_name
  *         - gender
  *         - date_of_birth
- *         - status
- *         - created_by
  *       properties:
  *         admission_number:
  *           type: string
@@ -282,7 +282,12 @@ export default router;
  *         status:
  *           type: string
  *           enum: [active, inactive, graduated, transferred, suspended, archived]
- *         created_by:
+ *     SchoolClass:
+ *       type: object
+ *       properties:
+ *         id:
  *           type: string
  *           format: uuid
+ *         name:
+ *           type: string
  */

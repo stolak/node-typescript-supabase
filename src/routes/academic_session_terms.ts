@@ -10,6 +10,14 @@ const router = Router();
  *     summary: Get all academic session terms
  *     tags:
  *       - AcademicSessionTerms
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [active, inactive]
+ *         required: false
+ *         description: Filter by academic session term status
  *     responses:
  *       200:
  *         description: List of academic session terms
@@ -37,10 +45,11 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/AcademicSessionTerm'
  */
-router.get("/", async (_req: Request, res: Response) => {
-  const { data, error } = await supabase
-    .from("academic_session_terms")
-    .select("*");
+router.get("/", async (req: Request, res: Response) => {
+  const { status } = req.query;
+  let query = supabase.from("academic_session_terms").select(`*`);
+  if (status) query = query.eq("status", status);
+  const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
@@ -54,11 +63,9 @@ router.post("/", async (req: Request, res: Response) => {
     !body.end_date ||
     !body.status
   ) {
-    return res
-      .status(400)
-      .json({
-        error: "session, name, start_date, end_date, and status are required",
-      });
+    return res.status(400).json({
+      error: "session, name, start_date, end_date, and status are required",
+    });
   }
   const { data, error } = await supabase
     .from("academic_session_terms")
@@ -136,7 +143,7 @@ router.get("/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
   const { data, error } = await supabase
     .from("academic_session_terms")
-    .select("*")
+    .select(`*`)
     .eq("id", id)
     .single();
   if (error)
@@ -151,7 +158,7 @@ router.put("/:id", async (req: Request, res: Response) => {
     .from("academic_session_terms")
     .update({ ...body })
     .eq("id", id)
-    .select()
+    .select(`*`)
     .single();
   if (error)
     return res
