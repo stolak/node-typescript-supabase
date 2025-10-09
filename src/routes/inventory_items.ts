@@ -331,6 +331,9 @@ export default router;
  *           type: number
  *         selling_price:
  *           type: number
+ *         low_stock_threshold:
+ *           type: integer
+ *           nullable: true
  *         created_by:
  *           type: string
  *           format: uuid
@@ -340,4 +343,58 @@ export default router;
  *         updated_at:
  *           type: string
  *           format: date-time
+ *         category_name:
+ *           type: string
+ *         sub_category_name:
+ *           type: string
+ *         brand_name:
+ *           type: string
+ *         uom_name:
+ *           type: string
+ *         current_stock:
+ *           type: integer
+ *         total_in_cost:
+ *           type: number
+ *         total_out_cost:
+ *           type: number
+ *         categories:
+ *           $ref: '#/components/schemas/Category'
+ *         sub_categories:
+ *           $ref: '#/components/schemas/SubCategory'
+ *         uoms:
+ *           $ref: '#/components/schemas/UOM'
+ *         brands:
+ *           $ref: '#/components/schemas/Brand'
+ *     Category:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *     SubCategory:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *     UOM:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *     Brand:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
  */

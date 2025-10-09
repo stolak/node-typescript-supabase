@@ -40,7 +40,9 @@ const router = Router();
 router.get("/", async (_req: Request, res: Response) => {
   const { data, error } = await supabase
     .from("inventory_transactions")
-    .select(`*, inventory_items(id, name), suppliers(id, name)`);
+    .select(
+      `*, inventory_items(id, name, categories(id, name)), suppliers(id, name)`
+    );
 
   if (error) {
     return res.status(500).json({ error: error.message });
@@ -93,7 +95,9 @@ router.post("/", async (req: Request, res: Response) => {
         created_by: req.user?.id || body.created_by || "",
       },
     ])
-    .select()
+    .select(
+      `*, inventory_items(id, name, categories(id, name)), suppliers(id, name)`
+    )
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
@@ -167,7 +171,9 @@ router.get("/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
   const { data, error } = await supabase
     .from("inventory_transactions")
-    .select("*")
+    .select(
+      `*, inventory_items(id, name, categories(id, name)), suppliers(id, name)`
+    )
     .eq("id", id)
     .single();
 
@@ -424,11 +430,13 @@ router.put("/distributions/:id", async (req: Request, res: Response) => {
  *         supplier_id:
  *           type: string
  *           format: uuid
+ *           nullable: true
  *         receiver_id:
  *           type: string
  *           format: uuid
  *         supplier_receiver:
  *           type: string
+ *           nullable: true
  *         transaction_type:
  *           type: string
  *           enum: [purchase, sale]
@@ -445,8 +453,10 @@ router.put("/distributions/:id", async (req: Request, res: Response) => {
  *           enum: [pending, cancelled, deleted, completed]
  *         reference_no:
  *           type: string
+ *           nullable: true
  *         notes:
  *           type: string
+ *           nullable: true
  *         transaction_date:
  *           type: string
  *           format: date-time
@@ -459,6 +469,37 @@ router.put("/distributions/:id", async (req: Request, res: Response) => {
  *         updated_at:
  *           type: string
  *           format: date-time
+ *         inventory_items:
+ *           $ref: '#/components/schemas/InventoryItemWithCategory'
+ *         suppliers:
+ *           $ref: '#/components/schemas/Supplier'
+ *           nullable: true
+ *     InventoryItemWithCategory:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *         categories:
+ *           $ref: '#/components/schemas/Category'
+ *     Category:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *     Supplier:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
  *     InventoryTransactionInput:
  *       type: object
  *       required:

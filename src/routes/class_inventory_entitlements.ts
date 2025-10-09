@@ -312,6 +312,12 @@ export default router;
  *         updated_at:
  *           type: string
  *           format: date-time
+ *         inventory_items:
+ *           $ref: '#/components/schemas/InventoryItemWithCategory'
+ *         academic_session_terms:
+ *           $ref: '#/components/schemas/AcademicSessionTerm'
+ *         school_classes:
+ *           $ref: '#/components/schemas/SchoolClass'
  *     ClassInventoryEntitlementInput:
  *       type: object
  *       required:
@@ -319,7 +325,6 @@ export default router;
  *         - inventory_item_id
  *         - session_term_id
  *         - quantity
- *         - created_by
  *       properties:
  *         class_id:
  *           type: string
@@ -334,7 +339,38 @@ export default router;
  *           type: integer
  *         notes:
  *           type: string
- *         created_by:
+ *     InventoryItemWithCategory:
+ *       type: object
+ *       properties:
+ *         id:
  *           type: string
  *           format: uuid
+ *         name:
+ *           type: string
+ *         categories:
+ *           $ref: '#/components/schemas/InventoryCategory'
+ *     InventoryCategory:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *     AcademicSessionTerm:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *     SchoolClass:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
  */
