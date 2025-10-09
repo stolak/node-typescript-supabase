@@ -260,10 +260,8 @@ CREATE TABLE IF NOT EXISTS student_inventory_log (
     created_by uuid not null references auth.users(id) on delete restrict, -- admin entry
 
     created_at timestamptz default now(),
-    updated_at timestamptz default now(),
+    updated_at timestamptz default now()
 
-    unique (student_id, session_term_id, inventory_item_id) 
-    -- prevents duplicate entries for same student/item/term
 );
 
 CREATE TABLE IF NOT EXISTS class_teachers (
