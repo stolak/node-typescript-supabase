@@ -235,7 +235,7 @@ LEFT JOIN categories c ON c.id = i.category_id
 LEFT JOIN sub_categories sc ON sc.id = i.sub_category_id
 LEFT JOIN brands b ON b.id = i.brand_id
 LEFT JOIN uoms u ON u.id = i.uom_id
-LEFT JOIN inventory_transactions t ON t.item_id = i.id AND t.status = 'completed'
+LEFT JOIN inventory_transactions t ON t.item_id = i.id AND t.status <> 'pending'
 GROUP BY i.id, c.name, sc.name, b.name, u.name;
 
 `;

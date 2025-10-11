@@ -1,8 +1,9 @@
 import { Router, Request, Response } from "express";
 import { supabase } from "../supabaseClient";
+import { InventoryService } from "../services/inventoryService";
 
 const router = Router();
-
+const inventoryService = new InventoryService();
 /**
  * @openapi
  * /api/v1/inventory_transactions:
@@ -70,6 +71,17 @@ router.post("/", async (req: Request, res: Response) => {
     (!body.qty_out || body.qty_out <= 0)
   ) {
     return res.status(400).json({ error: "qty_out is required for sales" });
+  }
+
+  if (body.transaction_type === "sale") {
+    // check current stock level if enough for the sale
+
+    const inventorySummary = await inventoryService.getInventorySummary(
+      body.item_id
+    );
+    if ((inventorySummary?.current_stock || 0) < (Number(body.qty_out) || 0)) {
+      return res.status(400).json({ error: "Insufficient stock for the sale" });
+    }
   }
 
   if (
