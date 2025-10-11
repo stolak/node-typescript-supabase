@@ -173,10 +173,21 @@ router.delete("/:id", async (req: Request, res: Response) => {
     .from("academic_session_terms")
     .delete()
     .eq("id", id);
-  if (error)
+  if (error) {
+    if (error.code === "23503") {
+      return res.status(400).json({
+        error:
+          "Unable to delete academic session term because it is still in use by other records.",
+      });
+    }
     return res
-      .status(404)
-      .json({ error: "Academic session term not found or delete failed" });
+      .status(500)
+      .json({
+        error:
+          "An unexpected error occurred while deleting academic session term.",
+      });
+  }
+
   res.status(204).send();
 });
 

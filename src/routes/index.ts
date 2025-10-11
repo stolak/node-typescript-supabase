@@ -16,6 +16,7 @@ import suppliersRouter from "./suppliers";
 import academicSessionTermsRouter from "./academic_session_terms";
 import classInventoryEntitlementsRouter from "./class_inventory_entitlements";
 import studentInventoryLogRouter from "./student_inventory_log";
+import inventorySummaryRouter from "./inventory_summary";
 
 const router = Router();
 
@@ -49,6 +50,11 @@ router.use(
   "/student_inventory_collection",
   authenticateSupabaseToken,
   studentInventoryLogRouter
+);
+router.use(
+  "/inventory_summary",
+  authenticateSupabaseToken,
+  inventorySummaryRouter
 );
 router.use("/class_teachers", authenticateSupabaseToken, classTeachersRouter);
 
