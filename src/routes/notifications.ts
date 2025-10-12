@@ -428,4 +428,25 @@ router.get("/test-connection", async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/v1/notifications/config-status:
+ *   get:
+ *     summary: Get email service configuration status
+ *     tags:
+ *       - Notifications
+ *     responses:
+ *       200:
+ *         description: Configuration status retrieved successfully
+ */
+router.get("/config-status", async (req: Request, res: Response) => {
+  try {
+    const status = emailService.getConfigurationStatus();
+    res.json(status);
+  } catch (error) {
+    console.error("Error getting email configuration status:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;

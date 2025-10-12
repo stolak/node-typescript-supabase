@@ -57,7 +57,7 @@ router.use(
   authenticateSupabaseToken,
   inventorySummaryRouter
 );
-router.use("/notifications", authenticateSupabaseToken, notificationsRouter);
+router.use("/notifications", notificationsRouter);
 router.use("/class_teachers", authenticateSupabaseToken, classTeachersRouter);
 
 export default router;

@@ -65,12 +65,24 @@ export class EmailService {
       tls: {
         rejectUnauthorized: false, // For development/testing purposes
       },
+      // Additional options for better compatibility
+      connectionTimeout: 60000, // 60 seconds
+      greetingTimeout: 30000, // 30 seconds
+      socketTimeout: 60000, // 60 seconds
+      pool: true,
+      maxConnections: 1,
+      maxMessages: 100,
+      rateDelta: 1000,
+      rateLimit: 5,
     });
 
-    // Verify connection configuration
+    // Verify connection configuration (non-blocking)
     this.transporter.verify((error, success) => {
       if (error) {
-        console.error("Email service configuration error:", error);
+        console.error("Email service configuration error:", error.message);
+        console.log(
+          "Email service will continue to run but emails may fail to send"
+        );
       } else {
         console.log("Email service is ready to send messages");
       }
@@ -398,10 +410,36 @@ export class EmailService {
       await this.transporter.verify();
       console.log("Email service connection test successful");
       return true;
-    } catch (error) {
-      console.error("Email service connection test failed:", error);
+    } catch (error: any) {
+      console.error("Email service connection test failed:", error.message);
+      if (error.code === "EAUTH") {
+        console.error(
+          "Authentication failed. Please check your email credentials."
+        );
+      } else if (error.code === "ECONNECTION") {
+        console.error("Connection failed. Please check your SMTP settings.");
+      }
       return false;
     }
+  }
+
+  /**
+   * Get email configuration status
+   * @returns object with configuration status
+   */
+  getConfigurationStatus() {
+    return {
+      host: this.config.host,
+      port: this.config.port,
+      username: this.config.username,
+      encryption: this.config.encryption,
+      hasPassword: !!this.config.password,
+      isConfigured: !!(
+        this.config.host &&
+        this.config.username &&
+        this.config.password
+      ),
+    };
   }
 }
 
