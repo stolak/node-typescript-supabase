@@ -11,6 +11,14 @@ const inventoryService = new InventoryService();
  *     summary: Get all inventory transactions
  *     tags:
  *       - InventoryTransactions
+ *     parameters:
+ *       - in: query
+ *         name: transaction_type
+ *         schema:
+ *           type: string
+ *           enum: [purchase, sale]
+ *         required: false
+ *         description: Filter by transaction type
  *     responses:
  *       200:
  *         description: List of inventory transactions

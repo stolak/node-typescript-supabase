@@ -225,6 +225,10 @@ export default router;
  *           type: string
  *         last_name:
  *           type: string
+ *         student_email:
+ *           type: string
+ *         guardian_email:
+ *           type: string
  *         gender:
  *           type: string
  *           enum: [male, female, other]
@@ -271,6 +275,8 @@ export default router;
  *           type: string
  *         last_name:
  *           type: string
+ *         student_email:
+ *           type: string
  *         gender:
  *           type: string
  *           enum: [male, female, other]
@@ -281,6 +287,8 @@ export default router;
  *           type: string
  *           format: uuid
  *         guardian_name:
+ *           type: string
+ *         guardian_email:
  *           type: string
  *         guardian_contact:
  *           type: string
