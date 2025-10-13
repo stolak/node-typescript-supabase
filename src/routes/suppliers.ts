@@ -239,10 +239,17 @@ router.put("/:id", async (req: Request, res: Response) => {
 router.delete("/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
   const { error } = await supabase.from("suppliers").delete().eq("id", id);
-  if (error)
+  if (error) {
+    if (error.code === "23503") {
+      return res.status(400).json({
+        error:
+          "Unable to delete supplier because it is still in use by other records.",
+      });
+    }
     return res
-      .status(404)
-      .json({ error: "Supplier not found or delete failed" });
+      .status(500)
+      .json({ error: "An unexpected error occurred while deleting supplier." });
+  }
   res.status(200).json({ message: "Supplier deleted successfully" });
 });
 

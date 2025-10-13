@@ -151,9 +151,15 @@ router.delete("/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
   const { error } = await supabase.from("school_classes").delete().eq("id", id);
   if (error)
-    return res
-      .status(404)
-      .json({ error: "School class not found or delete failed" });
+    if (error.code === "23503") {
+      return res.status(400).json({
+        error:
+          "Unable to delete school class because it is still in use by other records.",
+      });
+    }
+  return res
+    .status(404)
+    .json({ error: "School class not found or delete failed" });
   res.status(200).json({ message: "School class deleted successfully" });
 });
 

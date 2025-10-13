@@ -1,8 +1,9 @@
 import { Router, Request, Response } from "express";
 import { supabase } from "../supabaseClient";
+import { InventoryService } from "../services/inventoryService";
 
 const router = Router();
-
+const inventoryService = new InventoryService();
 /**
  * @openapi
  * /api/v1/inventory_transactions:
@@ -10,6 +11,14 @@ const router = Router();
  *     summary: Get all inventory transactions
  *     tags:
  *       - InventoryTransactions
+ *     parameters:
+ *       - in: query
+ *         name: transaction_type
+ *         schema:
+ *           type: string
+ *           enum: [purchase, sale]
+ *         required: false
+ *         description: Filter by transaction type
  *     responses:
  *       200:
  *         description: List of inventory transactions
@@ -70,6 +79,17 @@ router.post("/", async (req: Request, res: Response) => {
     (!body.qty_out || body.qty_out <= 0)
   ) {
     return res.status(400).json({ error: "qty_out is required for sales" });
+  }
+
+  if (body.transaction_type === "sale") {
+    // check current stock level if enough for the sale
+
+    const inventorySummary = await inventoryService.getInventorySummary(
+      body.item_id
+    );
+    if ((inventorySummary?.current_stock || 0) < (Number(body.qty_out) || 0)) {
+      return res.status(400).json({ error: "Insufficient stock for the sale" });
+    }
   }
 
   if (
@@ -220,7 +240,62 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
 /**
  * @openapi
- * /api/v1/inventory_transactions/distributions:
+ * /api/v1/inventory_transactions/distributions/query:
+ *   get:
+ *     summary: Get class inventory distributions with optional filtering
+ *     tags:
+ *       - ClassInventoryDistributions
+ *     parameters:
+ *       - in: query
+ *         name: class_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by class ID
+ *       - in: query
+ *         name: session_term_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by session term ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of class inventory distributions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/ClassInventoryDistributionWithDetails'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
  *   post:
  *     summary: Distribute inventory items to to the specified class
  *     tags:
@@ -239,9 +314,78 @@ router.delete("/:id", async (req: Request, res: Response) => {
  *             schema:
  *               $ref: '#/components/schemas/ClassInventoryDistribution'
  */
+router.get("/distributions/query", async (req: Request, res: Response) => {
+  try {
+    console.log("req.query", req.query);
+    const { class_id, session_term_id, page = 1, limit = 10 } = req.query;
+
+    // Parse pagination parameters
+    const pageNum = parseInt(page as string) || 1;
+    const limitNum = Math.min(parseInt(limit as string) || 10, 100);
+    const offset = (pageNum - 1) * limitNum;
+
+    // Build query with filters
+    let query = supabase
+      .from("class_inventory_distributions")
+      .select(
+        `
+        *,
+        school_classes(id, name),
+        academic_session_terms(id, name, session),
+        inventory_items(id, name, sku, cost_price, selling_price, categories(id, name))
+      `
+      )
+      .order("created_at", { ascending: false });
+
+    // Apply filters
+    if (class_id) {
+      query = query.eq("class_id", class_id);
+    }
+    if (session_term_id) {
+      query = query.eq("session_term_id", session_term_id);
+    }
+
+    // Get total count for pagination
+    let countQuery = supabase
+      .from("class_inventory_distributions")
+      .select("*", { count: "exact", head: true });
+
+    if (class_id) {
+      countQuery = countQuery.eq("class_id", class_id);
+    }
+    if (session_term_id) {
+      countQuery = countQuery.eq("session_term_id", session_term_id);
+    }
+
+    const { count } = await countQuery;
+
+    // Get paginated data
+    const { data, error } = await query.range(offset, offset + limitNum - 1);
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    const total = count || 0;
+    const totalPages = Math.ceil(total / limitNum);
+
+    res.json({
+      data: data || [],
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching class inventory distributions:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.post("/distributions", async (req: Request, res: Response) => {
   const body = req.body;
-  console.log(body);
   if (
     !body.class_id ||
     !body.inventory_item_id ||
@@ -386,6 +530,66 @@ router.put("/distributions/:id", async (req: Request, res: Response) => {
  *         updated_at:
  *           type: string
  *           format: date-time
+ *     ClassInventoryDistributionWithDetails:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         class_id:
+ *           type: string
+ *           format: uuid
+ *         inventory_item_id:
+ *           type: string
+ *           format: uuid
+ *         session_term_id:
+ *           type: string
+ *           format: uuid
+ *         distributed_quantity:
+ *           type: integer
+ *         distribution_date:
+ *           type: string
+ *           format: date-time
+ *         received_by:
+ *           type: string
+ *           format: uuid
+ *         receiver_name:
+ *           type: string
+ *         notes:
+ *           type: string
+ *         created_by:
+ *           type: string
+ *           format: uuid
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *         school_classes:
+ *           $ref: '#/components/schemas/SchoolClass'
+ *         academic_session_terms:
+ *           $ref: '#/components/schemas/AcademicSessionTerm'
+ *         inventory_items:
+ *           $ref: '#/components/schemas/InventoryItemWithCategory'
+ *     SchoolClass:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *     AcademicSessionTerm:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *         session:
+ *           type: string
  *     ClassInventoryDistributionInput:
  *       type: object
  *       required:
