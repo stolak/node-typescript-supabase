@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node-dev src/index.ts",
+    "dev": "npx kill-port 3000 && ts-node-dev src/index.ts",
     "build": "tsc",
     "start": "npm run build && node dist/index.js"
   },
