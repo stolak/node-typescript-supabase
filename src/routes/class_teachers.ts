@@ -38,7 +38,11 @@ const router = Router();
  *               $ref: '#/components/schemas/ClassTeacher'
  */
 router.get("/", async (_req: Request, res: Response) => {
-  const { data, error } = await supabase.from("class_teachers").select("*");
+  const { data, error } = await supabase.from("class_teachers").select(`
+    *,
+    school_classes(id, name),
+    academic_session_terms(id, name)
+  `);
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
@@ -64,7 +68,7 @@ router.post("/", async (req: Request, res: Response) => {
   const { data: existingClassTeacher, error: classTeacherError } =
     await supabase
       .from("class_teachers")
-      .select("*")
+      .select(`*, school_classes(id, name), academic_session_terms(id, name)`)
       .eq("email", body.email)
       .single();
   if (classTeacherError && classTeacherError.code !== "PGRST116") {
@@ -86,7 +90,11 @@ router.post("/", async (req: Request, res: Response) => {
     return res.status(500).json({ error: createUserError.message });
   }
   // Insert class_teacher
-  const insertBody = { ...body, teacher_id: newUser.user.id };
+  const insertBody = {
+    ...body,
+    teacher_id: newUser.user.id,
+    created_by: req.user?.id,
+  };
   const { data, error } = await supabase
     .from("class_teachers")
     .insert([insertBody])
@@ -224,6 +232,8 @@ export default router;
  *         teacher_id:
  *           type: string
  *           format: uuid
+ *         name:
+ *           type: string
  *         email:
  *           type: string
  *         role:
@@ -238,9 +248,6 @@ export default router;
  *         unassigned_at:
  *           type: string
  *           format: date-time
- *         created_by:
- *           type: string
- *           format: uuid
  *         created_at:
  *           type: string
  *           format: date-time
@@ -251,9 +258,10 @@ export default router;
  *       type: object
  *       required:
  *         - email
+ *         - name
  *         - role
  *         - status
- *         - created_by
+ 
  *       properties:
  *         class_id:
  *           type: string
@@ -261,6 +269,8 @@ export default router;
  *         session_term_id:
  *           type: string
  *           format: uuid
+ *         name:
+ *           type: string
  *         email:
  *           type: string
  *         role:
