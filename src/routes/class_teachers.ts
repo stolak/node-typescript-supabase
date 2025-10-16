@@ -40,8 +40,8 @@ const router = Router();
 router.get("/", async (_req: Request, res: Response) => {
   const { data, error } = await supabase.from("class_teachers").select(`
     *,
-    school_classes(id, name),
-    academic_session_terms(id, name)
+    school_classes(id, name)
+   
   `);
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
@@ -68,7 +68,7 @@ router.post("/", async (req: Request, res: Response) => {
   const { data: existingClassTeacher, error: classTeacherError } =
     await supabase
       .from("class_teachers")
-      .select(`*, school_classes(id, name), academic_session_terms(id, name)`)
+      .select(`*, school_classes(id, name)`)
       .eq("email", body.email)
       .single();
   if (classTeacherError && classTeacherError.code !== "PGRST116") {
@@ -226,9 +226,6 @@ export default router;
  *         class_id:
  *           type: string
  *           format: uuid
- *         session_term_id:
- *           type: string
- *           format: uuid
  *         teacher_id:
  *           type: string
  *           format: uuid
@@ -264,9 +261,6 @@ export default router;
  
  *       properties:
  *         class_id:
- *           type: string
- *           format: uuid
- *         session_term_id:
  *           type: string
  *           format: uuid
  *         name:

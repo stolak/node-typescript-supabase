@@ -177,9 +177,6 @@ export default router;
  *           format: uuid
  *         name:
  *           type: string
- *         class_teacher_id:
- *           type: string
- *           format: uuid
  *         status:
  *           type: string
  *           enum: [active, inactive, archived]
@@ -197,17 +194,10 @@ export default router;
  *       required:
  *         - name
  *         - status
- *         - created_by
  *       properties:
  *         name:
  *           type: string
- *         class_teacher_id:
- *           type: string
- *           format: uuid
  *         status:
  *           type: string
  *           enum: [active, inactive, archived]
- *         created_by:
- *           type: string
- *           format: uuid
  */
