@@ -116,7 +116,6 @@ CREATE TABLE IF NOT EXISTS inventory_transactions (
 CREATE TABLE IF NOT EXISTS school_classes (
   id uuid primary key default gen_random_uuid(),
   name text not null unique,
-  class_teacher_id uuid references auth.users(id) ON DELETE SET NULL,
   status text not null default 'active' check (status in ('active','inactive','archived')),
   created_by uuid not null references auth.users(id) ON DELETE RESTRICT,
   created_at timestamptz default now(),
@@ -207,7 +206,6 @@ CREATE TABLE IF NOT EXISTS student_inventory_log (
 CREATE TABLE IF NOT EXISTS class_teachers (
   id uuid primary key default gen_random_uuid(),
   class_id uuid references school_classes(id) ON DELETE SET NULL,
-  session_term_id uuid references academic_session_terms(id) ON DELETE RESTRICT,
   teacher_id uuid not null references auth.users(id) ON DELETE RESTRICT,
   email text not null unique,
   name text not null,

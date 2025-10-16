@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "npx kill-port 3000 && ts-node-dev src/index.ts",
     "build": "tsc",
-    "start": "npm run build && node dist/index.js"
+    "start": "npm run build && node dist/index.js",
+    "migrate:create": "node scripts/create-tables.js",
+    "migrate:drop": "node scripts/drop-tables.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.7",
