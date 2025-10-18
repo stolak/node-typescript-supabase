@@ -238,6 +238,28 @@ LEFT JOIN uoms u ON u.id = i.uom_id
 LEFT JOIN inventory_transactions t ON t.item_id = i.id AND t.status <> 'pending'
 GROUP BY i.id, c.name, sc.name, b.name, u.name;
 
+
+CREATE OR REPLACE VIEW low_stock_items AS
+SELECT 
+  i.*,
+  c.name AS category_name,
+  sc.name AS sub_category_name,
+  b.name AS brand_name,
+  u.name AS uom_name,
+  COALESCE(SUM(t.qty_in) - SUM(t.qty_out), 0) AS current_stock,
+  COALESCE(SUM(t.in_cost), 0) AS total_in_cost,
+  COALESCE(SUM(t.out_cost), 0) AS total_out_cost
+FROM inventory_items i
+LEFT JOIN categories c ON c.id = i.category_id
+LEFT JOIN sub_categories sc ON sc.id = i.sub_category_id
+LEFT JOIN brands b ON b.id = i.brand_id
+LEFT JOIN uoms u ON u.id = i.uom_id
+LEFT JOIN inventory_transactions t ON t.item_id = i.id AND t.status <> 'pending'
+GROUP BY i.id, c.name, sc.name, b.name, u.name
+HAVING COALESCE(SUM(t.qty_in) - SUM(t.qty_out), 0) <= i.low_stock_threshold;
+
+
+
 `;
 
 async function run() {
