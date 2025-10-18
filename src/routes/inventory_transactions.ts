@@ -296,6 +296,11 @@ router.delete("/:id", async (req: Request, res: Response) => {
  *                       type: integer
  *                     totalPages:
  *                       type: integer
+ */
+
+/**
+ * @openapi
+ * /api/v1/inventory_transactions/distributions:
  *   post:
  *     summary: Distribute inventory items to to the specified class
  *     tags:
@@ -403,7 +408,17 @@ router.post("/distributions", async (req: Request, res: Response) => {
       .status(400)
       .json({ error: "distributed_quantity must be greater than 0" });
   }
-
+  const inventorySummary = await inventoryService.getInventorySummary(
+    body.inventory_item_id
+  );
+  if (
+    (inventorySummary?.current_stock ?? 0) <
+    (Number(body.distributed_quantity) ?? 0)
+  ) {
+    return res
+      .status(400)
+      .json({ error: "Insufficient stock for the distribution" });
+  }
   const insertData = {
     ...body,
     distribution_date: body.distribution_date || new Date().toISOString(),
