@@ -286,16 +286,8 @@ export class InventoryService {
         return [];
       }
       console.log("djdjdjitems", items);
-      const lowStockItems: InventorySummary[] = [];
 
-      for (const item of items) {
-        const summary = await this.getInventorySummary(item.id);
-        if (summary && summary.is_low_stock) {
-          lowStockItems.push(summary);
-        }
-      }
-
-      return lowStockItems;
+      return items as InventorySummary[];
     } catch (error) {
       console.error("Error in getLowStockItems:", error);
       throw error;
