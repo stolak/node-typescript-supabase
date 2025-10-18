@@ -16,7 +16,7 @@ const inventoryService = new InventoryService();
  *         name: transaction_type
  *         schema:
  *           type: string
- *           enum: [purchase, sale]
+ *           enum: [purchase, sale, distribution, return]
  *         required: false
  *         description: Filter by transaction type
  *     responses:
@@ -29,7 +29,7 @@ const inventoryService = new InventoryService();
  *               items:
  *                 $ref: '#/components/schemas/InventoryTransaction'
  *   post:
- *     summary: Create a new inventory transaction (purchase or sale)
+ *     summary: Create a new inventory transaction (purchase or sale or distribution or return)
  *     tags:
  *       - InventoryTransactions
  *     requestBody:
@@ -437,7 +437,7 @@ router.post("/distributions", async (req: Request, res: Response) => {
       {
         item_id: insertData.inventory_item_id,
         receiver_id: insertData.received_by,
-        transaction_type: "sale",
+        transaction_type: "distribution",
         qty_out: insertData.distributed_quantity,
         out_cost: insertData?.out_cost || 0,
         status: "completed",
@@ -445,6 +445,7 @@ router.post("/distributions", async (req: Request, res: Response) => {
         notes: insertData?.notes,
         transaction_date: insertData.distribution_date,
         created_by: insertData.created_by,
+        distribution_id: data.id,
       },
     ])
     .select()
@@ -495,12 +496,23 @@ router.put("/distributions/:id", async (req: Request, res: Response) => {
     .eq("id", id)
     .select()
     .single();
-
   if (error) {
     return res.status(404).json({
       error: "Class inventory distribution not found or update failed",
     });
   }
+
+  const { data: inventoryData, error: inventoryError } = await supabase
+    .from("inventory_transactions")
+    .update({
+      qty_out: body.distributed_quantity,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("distribution_id", id)
+    .select()
+    .single();
+  if (inventoryError)
+    return res.status(500).json({ error: inventoryError.message });
 
   res.json(data);
 });
@@ -658,7 +670,7 @@ router.put("/distributions/:id", async (req: Request, res: Response) => {
  *           nullable: true
  *         transaction_type:
  *           type: string
- *           enum: [purchase, sale]
+ *           enum: [purchase, sale, distribution, return]
  *         qty_in:
  *           type: number
  *         in_cost:
@@ -738,7 +750,7 @@ router.put("/distributions/:id", async (req: Request, res: Response) => {
  *           type: string
  *         transaction_type:
  *           type: string
- *           enum: [purchase, sale]
+ *           enum: [purchase, sale, distribution, return]
  *         qty_in:
  *           type: number
  *         in_cost:

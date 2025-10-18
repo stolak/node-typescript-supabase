@@ -118,7 +118,7 @@ router.post("/", async (req: Request, res: Response) => {
     barcode,
     cost_price,
     selling_price,
-    low_stock_threshold,
+    low_stock_threshold: low_stock_threshold = 0,
   } = req.body;
 
   if (!name || !category_id)
@@ -298,11 +298,9 @@ router.delete("/:id", async (req: Request, res: Response) => {
       });
     }
 
-    return res
-      .status(500)
-      .json({
-        error: "An unexpected error occurred while deleting Inventory item.",
-      });
+    return res.status(500).json({
+      error: "An unexpected error occurred while deleting Inventory item.",
+    });
   }
   res.status(200).json({ message: "Inventory item deleted successfully" });
 });
