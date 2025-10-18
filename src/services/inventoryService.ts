@@ -260,8 +260,9 @@ export class InventoryService {
    */
   async getLowStockItems(): Promise<InventorySummary[]> {
     try {
+      console.log("djdjdjitems getLowStockItems");
       const { data: items, error } = await supabase
-        .from("inventory_item_summary")
+        .from("low_stock_items")
         .select(
           `   
           id,
@@ -272,28 +273,21 @@ export class InventoryService {
           sub_category_name,
           brand_name,
           uom_name,
+          current_stock,
           total_in_cost,
           total_out_cost
         `
-        )
-        .not("low_stock_threshold", "is", null)
-        .gt("low_stock_threshold", 0);
+        );
+      // .not("low_stock_threshold", "is", null)
+      // .lte("current_stock", "low_stock_threshold");
 
       if (error) {
         console.error("Error fetching items with low stock threshold:", error);
         return [];
       }
+      console.log("djdjdjitems", items);
 
-      const lowStockItems: InventorySummary[] = [];
-
-      for (const item of items) {
-        const summary = await this.getInventorySummary(item.id);
-        if (summary && summary.is_low_stock) {
-          lowStockItems.push(summary);
-        }
-      }
-
-      return lowStockItems;
+      return items as InventorySummary[];
     } catch (error) {
       console.error("Error in getLowStockItems:", error);
       throw error;

@@ -178,7 +178,7 @@ router.get(
 
 /**
  * @openapi
- * /api/v1/inventory_summary/low-stock:
+ * /api/v1/inventory_summary/low/stock:
  *   get:
  *     summary: Get all low stock inventory items
  *     tags:
@@ -195,7 +195,7 @@ router.get(
  *       500:
  *         description: Internal server error
  */
-router.get("/low-stock", async (req: Request, res: Response) => {
+router.get("/low/stock", async (req: Request, res: Response) => {
   try {
     const lowStockItems = await inventoryService.getLowStockItems();
     res.json(lowStockItems);
