@@ -395,7 +395,8 @@ router.post("/distributions", async (req: Request, res: Response) => {
     !body.class_id ||
     !body.inventory_item_id ||
     !body.session_term_id ||
-    !body.distributed_quantity
+    !body.distributed_quantity ||
+    !body.received_by
   ) {
     return res.status(400).json({
       error:
@@ -624,6 +625,7 @@ router.put("/distributions/:id", async (req: Request, res: Response) => {
  *         - inventory_item_id
  *         - session_term_id
  *         - distributed_quantity
+ *         - received_by
  *       properties:
  *         class_id:
  *           type: string

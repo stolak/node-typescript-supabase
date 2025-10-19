@@ -8,7 +8,9 @@
     "start": "npm run build && node dist/index.js",
     "migrate:create": "node scripts/create-tables.js",
     "migrate:drop": "node scripts/drop-tables.js",
-    "migrate:alter": "node scripts/migrate-alter.js"
+    "migrate:alter": "node scripts/migrate-alter.js",
+    "migrate:teachers": "node scripts/create-missing-teachers.js",
+    "seed": "node scripts/seed-data.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.7",

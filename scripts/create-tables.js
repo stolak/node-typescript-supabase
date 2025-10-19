@@ -91,27 +91,7 @@ CREATE TABLE IF NOT EXISTS suppliers (
   updated_at timestamptz default now()
 );
 
--- Inventory Transactions
-CREATE TABLE IF NOT EXISTS inventory_transactions (
-  id uuid primary key default gen_random_uuid(),
-  item_id uuid not null references inventory_items(id) ON DELETE RESTRICT,
-  supplier_id uuid references suppliers(id) ON DELETE SET NULL,
-  receiver_id uuid references auth.users(id) ON DELETE SET NULL,
-  supplier_receiver text,
-  transaction_type text not null check (transaction_type in ('purchase','sale','distribution','return')),
-  qty_in numeric(12,2) default 0,
-  in_cost numeric(12,2) default 0,
-  qty_out numeric(12,2) default 0,
-  out_cost numeric(12,2) default 0,
-  status text not null default 'pending' check (status in ('pending','cancelled','deleted','completed')),
-  reference_no text,
-  notes text,
-  distribution_id uuid references class_inventory_distributions(id) ON DELETE SET NULL,
-  transaction_date timestamptz default now(),
-  created_by uuid not null references auth.users(id) ON DELETE RESTRICT,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
+
 
 -- School Classes
 CREATE TABLE IF NOT EXISTS school_classes (
@@ -156,6 +136,59 @@ CREATE TABLE IF NOT EXISTS academic_session_terms (
   unique (session, name)
 );
 
+-- Class Teachers
+CREATE TABLE IF NOT EXISTS class_teachers (
+  id uuid primary key default gen_random_uuid(),
+  class_id uuid references school_classes(id) ON DELETE SET NULL,
+  teacher_id uuid not null references auth.users(id) ON DELETE RESTRICT,
+  email text not null unique,
+  name text not null,
+  role text not null default 'class_teacher' check (role in ('class_teacher', 'assistant_teacher', 'subject_teacher')),
+  status text not null default 'active' check (status in ('active','inactive','archived')),
+  assigned_at timestamptz default now(),
+  unassigned_at timestamptz,
+  created_by uuid not null references auth.users(id) ON DELETE RESTRICT,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Class Inventory Distributions
+CREATE TABLE IF NOT EXISTS class_inventory_distributions (
+  id uuid primary key default gen_random_uuid(),
+  class_id uuid not null references school_classes(id) ON DELETE SET NULL,
+  inventory_item_id uuid not null references inventory_items(id) ON DELETE RESTRICT,
+  session_term_id uuid not null references academic_session_terms(id) ON DELETE RESTRICT,
+  distributed_quantity int not null check (distributed_quantity > 0),
+  distribution_date timestamptz not null default now(),
+  received_by uuid references class_teachers(id) ON DELETE RESTRICT,
+  receiver_name text,
+  notes text,
+  created_by uuid not null references auth.users(id) ON DELETE RESTRICT,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+-- Inventory Transactions
+CREATE TABLE IF NOT EXISTS inventory_transactions (
+  id uuid primary key default gen_random_uuid(),
+  item_id uuid not null references inventory_items(id) ON DELETE RESTRICT,
+  supplier_id uuid references suppliers(id) ON DELETE SET NULL,
+  receiver_id uuid references auth.users(id) ON DELETE SET NULL,
+  supplier_receiver text,
+  transaction_type text not null check (transaction_type in ('purchase','sale','distribution','return')),
+  qty_in numeric(12,2) default 0,
+  in_cost numeric(12,2) default 0,
+  qty_out numeric(12,2) default 0,
+  out_cost numeric(12,2) default 0,
+  status text not null default 'pending' check (status in ('pending','cancelled','deleted','completed')),
+  reference_no text,
+  notes text,
+  distribution_id uuid references class_inventory_distributions(id) ON DELETE SET NULL,
+  transaction_date timestamptz default now(),
+  created_by uuid not null references auth.users(id) ON DELETE RESTRICT,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
 -- Class Inventory Entitlements
 CREATE TABLE IF NOT EXISTS class_inventory_entitlements (
   id uuid primary key default gen_random_uuid(),
@@ -170,21 +203,7 @@ CREATE TABLE IF NOT EXISTS class_inventory_entitlements (
   unique (class_id, inventory_item_id, session_term_id)
 );
 
--- Class Inventory Distributions
-CREATE TABLE IF NOT EXISTS class_inventory_distributions (
-  id uuid primary key default gen_random_uuid(),
-  class_id uuid not null references school_classes(id) ON DELETE SET NULL,
-  inventory_item_id uuid not null references inventory_items(id) ON DELETE RESTRICT,
-  session_term_id uuid not null references academic_session_terms(id) ON DELETE RESTRICT,
-  distributed_quantity int not null check (distributed_quantity > 0),
-  distribution_date timestamptz not null default now(),
-  received_by uuid references auth.users(id) ON DELETE SET NULL,
-  receiver_name text,
-  notes text,
-  created_by uuid not null references auth.users(id) ON DELETE RESTRICT,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
+
 
 -- Student Inventory Log
 CREATE TABLE IF NOT EXISTS student_inventory_log (
@@ -203,21 +222,6 @@ CREATE TABLE IF NOT EXISTS student_inventory_log (
   updated_at timestamptz default now()
 );
 
--- Class Teachers
-CREATE TABLE IF NOT EXISTS class_teachers (
-  id uuid primary key default gen_random_uuid(),
-  class_id uuid references school_classes(id) ON DELETE SET NULL,
-  teacher_id uuid not null references auth.users(id) ON DELETE RESTRICT,
-  email text not null unique,
-  name text not null,
-  role text not null default 'class_teacher' check (role in ('class_teacher', 'assistant_teacher', 'subject_teacher')),
-  status text not null default 'active' check (status in ('active','inactive','archived')),
-  assigned_at timestamptz default now(),
-  unassigned_at timestamptz,
-  created_by uuid not null references auth.users(id) ON DELETE RESTRICT,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
 
 -- Inventory Summary View
 DROP VIEW IF EXISTS inventory_item_summary;
