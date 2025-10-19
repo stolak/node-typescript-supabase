@@ -1,10 +1,11 @@
 const { Client } = require("pg");
-require("dotenv").config({ path: ".env copy 2" });
+require("dotenv").config({ path: ".env" });
 
 // Use your Supabase database connection string from the environment variable
 const connectionString = process.env.SUPABASE_DB_URL;
 const userId = process.env.SEED_USER_ID || 'd35495e7-3dd1-4dde-ab48-b98f6c25180e';
-
+console.log("userId", userId);
+console.log("connectionString", connectionString);
 const seedData = {
   // Categories
   categories: [
