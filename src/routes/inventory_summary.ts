@@ -207,7 +207,7 @@ router.get("/low/stock", async (req: Request, res: Response) => {
 
 /**
  * @openapi
- * /api/v1/inventory_summary/distribution-summary:
+ * /api/v1/inventory_summary/distribution-summary/query:
  *   get:
  *     summary: Get distribution summary for class inventory and student logs
  *     tags:
@@ -249,27 +249,30 @@ router.get("/low/stock", async (req: Request, res: Response) => {
  *       500:
  *         description: Internal server error
  */
-router.get("/distribution-summary", async (req: Request, res: Response) => {
-  try {
-    const { inventory_item_id, class_id, session_term_id, teacher_id } =
-      req.query;
+router.get(
+  "/distribution-summary/query",
+  async (req: Request, res: Response) => {
+    try {
+      const { inventory_item_id, class_id, session_term_id, teacher_id } =
+        req.query;
 
-    const filters = {
-      inventory_item_id: inventory_item_id as string,
-      class_id: class_id as string,
-      session_term_id: session_term_id as string,
-      teacher_id: teacher_id as string,
-    };
+      const filters = {
+        inventory_item_id: inventory_item_id as string,
+        class_id: class_id as string,
+        session_term_id: session_term_id as string,
+        teacher_id: teacher_id as string,
+      };
 
-    const distributionSummary = await inventoryService.getDistributionSummary(
-      filters
-    );
-    res.json(distributionSummary);
-  } catch (error) {
-    console.error("Error fetching distribution summary:", error);
-    res.status(500).json({ error: "Internal server error" });
+      const distributionSummary = await inventoryService.getDistributionSummary(
+        filters
+      );
+      res.json(distributionSummary);
+    } catch (error) {
+      console.error("Error fetching distribution summary:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
-});
+);
 
 export default router;
 
