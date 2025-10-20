@@ -4,6 +4,7 @@ interface User {
   name: string | undefined;
   email: string | undefined;
   roles: string[];
+  teacher_id?: string | null;
 }
 
 declare module "express-serve-static-core" {

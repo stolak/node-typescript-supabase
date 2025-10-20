@@ -415,19 +415,20 @@ async function seedDatabase() {
     console.log("\n👩‍🏫 Seeding class teachers...");
     const classes = await client.query('SELECT id FROM school_classes ORDER BY name');
 
-    for (let i = 0; i < seedData.classTeachers.length && i < classes.rows.length; i++) {
-      const teacher = seedData.classTeachers[i];
-      const classId = classes.rows[i].id;
+    // Only insert one class teacher since teacher_id must be unique
+    if (classes.rows.length > 0) {
+      const teacher = seedData.classTeachers[0];
+      const classId = classes.rows[0].id;
 
       await client.query(`
         INSERT INTO class_teachers (
           teacher_id, email, name, class_id, role, status, created_by, created_at, updated_at
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
-        ON CONFLICT (email) DO NOTHING
+        ON CONFLICT (teacher_id) DO NOTHING
       `, [userId, teacher.email, teacher.name, classId, teacher.role, teacher.status, userId]);
     }
-    console.log(`✅ Inserted ${Math.min(seedData.classTeachers.length, classes.rows.length)} class teachers`);
+    console.log(`✅ Inserted 1 class teacher`);
 
     // 10. Seed Sample Inventory Items
     console.log("\n📦 Seeding sample inventory items...");

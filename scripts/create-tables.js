@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS academic_session_terms (
 CREATE TABLE IF NOT EXISTS class_teachers (
   id uuid primary key default gen_random_uuid(),
   class_id uuid references school_classes(id) ON DELETE SET NULL,
-  teacher_id uuid not null references auth.users(id) ON DELETE RESTRICT,
+  teacher_id uuid not null unique references auth.users(id) ON DELETE RESTRICT,
   email text not null unique,
   name text not null,
   role text not null default 'class_teacher' check (role in ('class_teacher', 'assistant_teacher', 'subject_teacher')),
@@ -216,7 +216,7 @@ CREATE TABLE IF NOT EXISTS student_inventory_log (
   eligible boolean not null default true,
   received boolean not null default false,
   received_date timestamptz,
-  given_by uuid references auth.users(id) ON DELETE SET NULL,
+  given_by uuid references class_teachers(id) ON DELETE RESTRICT,
   created_by uuid not null references auth.users(id) ON DELETE RESTRICT,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
@@ -262,6 +262,57 @@ LEFT JOIN uoms u ON u.id = i.uom_id
 LEFT JOIN inventory_transactions t ON t.item_id = i.id AND t.status <> 'pending'
 GROUP BY i.id, c.name, sc.name, b.name, u.name
 HAVING COALESCE(SUM(t.qty_in) - SUM(t.qty_out), 0) <= i.low_stock_threshold;
+
+
+CREATE OR REPLACE FUNCTION get_inventory_balance(
+  _inventory_item_id uuid DEFAULT NULL,
+  _class_id uuid DEFAULT NULL,
+  _session_term_id uuid DEFAULT NULL,
+  _teacher_id uuid DEFAULT NULL
+)
+RETURNS TABLE (
+  inventory_item_id uuid,
+  item_name text,
+  sku text,
+  category_name text,
+  uom_name text,
+  total_distributed int,
+  total_issued_to_students int,
+  balance_quantity int
+)
+LANGUAGE sql
+AS $$
+  SELECT 
+    cid.inventory_item_id,
+    i.name AS item_name,
+    i.sku,
+    c.name AS category_name,
+    u.name AS uom_name,
+    COALESCE(SUM(cid.distributed_quantity), 0) AS total_distributed,
+    COALESCE(SUM(sil.qty), 0) AS total_issued_to_students,
+    COALESCE(SUM(cid.distributed_quantity), 0) - COALESCE(SUM(sil.qty), 0) AS balance_quantity
+  FROM class_inventory_distributions cid
+  JOIN inventory_items i ON i.id = cid.inventory_item_id
+  LEFT JOIN categories c ON c.id = i.category_id
+  LEFT JOIN uoms u ON u.id = i.uom_id
+  LEFT JOIN student_inventory_log sil 
+    ON cid.inventory_item_id = sil.inventory_item_id
+    AND cid.class_id = sil.class_id
+    AND cid.session_term_id = sil.session_term_id
+    AND sil.received = TRUE
+  WHERE
+    (_inventory_item_id IS NULL OR cid.inventory_item_id = _inventory_item_id)
+    AND (_class_id IS NULL OR cid.class_id = _class_id)
+    AND (_session_term_id IS NULL OR cid.session_term_id = _session_term_id)
+    AND (
+      _teacher_id IS NULL 
+      OR cid.received_by = _teacher_id 
+      OR sil.given_by = _teacher_id
+    )
+  GROUP BY 
+    cid.inventory_item_id, i.name, i.sku, c.name, u.name
+  ORDER BY i.name;
+$$;
 
 
 

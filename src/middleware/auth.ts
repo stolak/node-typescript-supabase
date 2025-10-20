@@ -16,14 +16,27 @@ export async function authenticateSupabaseToken(
       console.error("Supabase auth error:", error);
       throw error;
     }
+
     // await supabase.auth.admin.updateUserById(data.user.id, {
     //   app_metadata: { roles: ["admin", "editor", "super-admin"] },
     // });
+
+    const { data: teacherData, error: teacherError } = await supabase
+      .from("class_teachers")
+      .select("*")
+      .eq("teacher_id", data.user.id)
+      .single();
+    let teacher_id = null;
+    if (teacherData) {
+      teacher_id = teacherData.id;
+    }
+    console.log("teacher_id", teacher_id);
     req.user = {
       id: data.user.id,
       name: data.user.email,
       email: data.user.email,
       roles: data.user.app_metadata.roles,
+      teacher_id: teacher_id,
     };
     // req.user = payload;
     next();
@@ -40,12 +53,13 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
   try {
     const payload = jwt.decode(token) as JwtPayload;
     if (!payload) throw new Error("Invalid token");
-
+    console.log(payload);
     req.user = {
       id: payload.sub,
       name: payload.email,
       email: payload.email,
       roles: payload.app_metadata.roles,
+      teacher_id: payload.teacher_id || null,
     };
 
     next();

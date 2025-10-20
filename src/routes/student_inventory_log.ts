@@ -125,9 +125,17 @@ router.post("/", async (req: Request, res: Response) => {
   if (body.qty <= 0) {
     return res.status(400).json({ error: "qty must be greater than 0" });
   }
+  if (!req.user?.teacher_id) {
+    return res.status(400).json({
+      error:
+        "You are not authorized to perform this action. You must be a teacher to perform this action",
+    });
+  }
   const { data, error } = await supabase
     .from("student_inventory_log")
-    .insert([{ ...body, created_by: req.user?.id, given_by: req.user?.id }])
+    .insert([
+      { ...body, created_by: req.user?.id, given_by: req.user?.teacher_id },
+    ])
     .select()
     .single();
   if (error) return res.status(500).json({ error: error.message });
@@ -168,11 +176,18 @@ router.post("/bulk_upsert", async (req: Request, res: Response) => {
       .json({ error: "Request body must be a non-empty array" });
   }
   // Validate each record
+  if (!req.user?.teacher_id) {
+    return res.status(400).json({
+      error:
+        "You are not authorized to perform this action. You must be a teacher to perform this action",
+    });
+  }
   const finalRecords = records.map((rec) => ({
     ...rec,
     created_by: req.user?.id,
-    given_by: req.user?.id,
+    given_by: req.user?.teacher_id,
   }));
+  console.log("finalRecords", finalRecords);
   for (const rec of finalRecords) {
     if (
       !rec.student_id ||

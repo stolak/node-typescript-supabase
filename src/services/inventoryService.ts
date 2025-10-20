@@ -19,7 +19,21 @@ export interface InventorySummary {
   last_purchase_date?: string;
   last_sale_date?: string;
 }
+export interface InventoryBalance {
+  inventory_item_id: string;
+  total_distributed: number;
+  total_received: number;
+  balance_quantity: number;
+}
 
+export interface DistributionSummary {
+  inventory_item_id: string;
+  item_name?: string;
+  total_distributed: number;
+  total_received: number;
+  balance_quantity: number;
+  last_distribution_date?: string;
+}
 export interface InventoryTransactionSummary {
   transaction_type: "purchase" | "sale";
   total_quantity: number;
@@ -261,6 +275,10 @@ export class InventoryService {
   async getLowStockItems(): Promise<InventorySummary[]> {
     try {
       console.log("djdjdjitems getLowStockItems");
+      const summaryDistribution = await this.getDistributionSummary({});
+      console.log("summaryDistribution", summaryDistribution);
+      const inventoryBalance = await this.getInventoryBalance({});
+      console.log("inventoryBalance", inventoryBalance);
       const { data: items, error } = await supabase
         .from("low_stock_items")
         .select(
@@ -290,6 +308,158 @@ export class InventoryService {
       return items as InventorySummary[];
     } catch (error) {
       console.error("Error in getLowStockItems:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get distribution summary for class inventory and student logs
+   * @param filters - Optional filters: inventory_item_id, class_id, session_term_id, teacher_id
+   * @returns Promise<DistributionSummary[]>
+   */
+  async getDistributionSummary(filters: {
+    inventory_item_id?: string;
+    class_id?: string;
+    session_term_id?: string;
+    teacher_id?: string;
+  }): Promise<DistributionSummary[]> {
+    const { inventory_item_id, class_id, session_term_id, teacher_id } =
+      filters;
+
+    try {
+      // Base query builder for class_inventory_distributions
+      let distQuery = supabase.from("class_inventory_distributions").select(
+        `
+        inventory_item_id,
+        distributed_quantity,
+        distribution_date,
+        received_by,
+        session_term_id
+      `
+      );
+
+      // Apply optional filters
+      if (inventory_item_id)
+        distQuery = distQuery.eq("inventory_item_id", inventory_item_id);
+      if (class_id) distQuery = distQuery.eq("class_id", class_id);
+      if (session_term_id)
+        distQuery = distQuery.eq("session_term_id", session_term_id);
+      if (teacher_id) distQuery = distQuery.eq("received_by", teacher_id);
+
+      const { data: distributions, error: distError } = await distQuery;
+
+      if (distError) {
+        console.error("Error fetching class distributions:", distError);
+        return [];
+      }
+
+      // Base query builder for student_inventory_log
+      let logQuery = supabase
+        .from("student_inventory_log")
+        .select(
+          `
+        inventory_item_id,
+        qty,
+        received,
+        received_date,
+        given_by,
+        session_term_id
+      `
+        )
+        .eq("received", true); // only received items
+
+      if (inventory_item_id)
+        logQuery = logQuery.eq("inventory_item_id", inventory_item_id);
+      if (class_id) logQuery = logQuery.eq("class_id", class_id);
+      if (session_term_id)
+        logQuery = logQuery.eq("session_term_id", session_term_id);
+      if (teacher_id) logQuery = logQuery.eq("given_by", teacher_id);
+
+      const { data: logs, error: logError } = await logQuery;
+
+      if (logError) {
+        console.error("Error fetching student inventory logs:", logError);
+        return [];
+      }
+
+      // Aggregate data by inventory_item_id
+      const summaryMap: Record<string, DistributionSummary> = {};
+
+      // Process class distributions
+      for (const dist of distributions || []) {
+        const key = dist.inventory_item_id;
+        if (!summaryMap[key]) {
+          summaryMap[key] = {
+            inventory_item_id: key,
+            total_distributed: 0,
+            total_received: 0,
+            balance_quantity: 0,
+          };
+        }
+        summaryMap[key].total_distributed += dist.distributed_quantity || 0;
+
+        // Track last distribution date
+        if (
+          !summaryMap[key].last_distribution_date ||
+          new Date(dist.distribution_date) >
+            new Date(summaryMap[key].last_distribution_date!)
+        ) {
+          summaryMap[key].last_distribution_date = dist.distribution_date;
+        }
+      }
+
+      // Process student logs
+      for (const log of logs || []) {
+        const key = log.inventory_item_id;
+        if (!summaryMap[key]) {
+          summaryMap[key] = {
+            inventory_item_id: key,
+            total_distributed: 0,
+            total_received: 0,
+            balance_quantity: 0,
+          };
+        }
+        summaryMap[key].total_received += log.qty || 0;
+      }
+
+      // Compute balance
+      for (const key of Object.keys(summaryMap)) {
+        const item = summaryMap[key];
+        item.balance_quantity = item.total_distributed - item.total_received;
+      }
+
+      return Object.values(summaryMap);
+    } catch (error) {
+      console.error("Error in getDistributionSummary:", error);
+      throw error;
+    }
+  }
+
+  async getInventoryBalance(filters: {
+    inventory_item_id?: string;
+    class_id?: string;
+    session_term_id?: string;
+    teacher_id?: string;
+  }): Promise<InventoryBalance[]> {
+    try {
+      const { inventory_item_id, class_id, session_term_id, teacher_id } =
+        filters;
+
+      const { data, error } = await supabase.rpc("get_inventory_balance", {
+        _inventory_item_id: inventory_item_id ?? null,
+        _class_id: class_id ?? null,
+        _session_term_id: session_term_id ?? null,
+        _teacher_id: teacher_id ?? null,
+      });
+
+      if (error) {
+        console.error("Error calling get_inventory_balance:", error);
+        throw error;
+      }
+
+      return data as InventoryBalance[];
+    } catch (error) {
+      console.error("Error in getInventoryBalance service:", error);
       throw error;
     }
   }

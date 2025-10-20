@@ -337,6 +337,7 @@ router.get("/distributions/query", async (req: Request, res: Response) => {
         *,
         school_classes(id, name),
         academic_session_terms(id, name, session),
+        class_teachers(id, name),
         inventory_items(id, name, sku, cost_price, selling_price, categories(id, name))
       `
       )
@@ -391,6 +392,7 @@ router.get("/distributions/query", async (req: Request, res: Response) => {
 
 router.post("/distributions", async (req: Request, res: Response) => {
   const body = req.body;
+  console.log("body", body);
   if (
     !body.class_id ||
     !body.inventory_item_id ||
@@ -437,7 +439,7 @@ router.post("/distributions", async (req: Request, res: Response) => {
     .insert([
       {
         item_id: insertData.inventory_item_id,
-        receiver_id: insertData.received_by,
+        // receiver_id: insertData.received_by,
         transaction_type: "distribution",
         qty_out: insertData.distributed_quantity,
         out_cost: insertData?.out_cost || 0,
