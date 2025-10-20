@@ -83,7 +83,7 @@ router.post("/", async (req: Request, res: Response) => {
   const { data: newUser, error: createUserError } =
     await supabase.auth.admin.createUser({
       email: body.email,
-      password: body.password || Math.random().toString(36).slice(-8),
+      password: body.password || "123456",
       user_metadata: { name: body.name, roles: ["teacher"] },
     });
   if (createUserError) {
