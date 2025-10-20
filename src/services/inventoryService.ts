@@ -29,8 +29,14 @@ export interface InventoryBalance {
 export interface DistributionSummary {
   inventory_item_id: string;
   item_name?: string;
-  total_distributed: number;
-  total_received: number;
+  inventory_items?: {
+    id: string;
+    name: string;
+    sku?: string;
+    categories?: { id: string; name: string } | null;
+  };
+  total_received_quantity: number;
+  total_distributed_quantity: number;
   balance_quantity: number;
   last_distribution_date?: string;
 }
@@ -274,11 +280,6 @@ export class InventoryService {
    */
   async getLowStockItems(): Promise<InventorySummary[]> {
     try {
-      console.log("djdjdjitems getLowStockItems");
-      const summaryDistribution = await this.getDistributionSummary({});
-      console.log("summaryDistribution", summaryDistribution);
-      const inventoryBalance = await this.getInventoryBalance({});
-      console.log("inventoryBalance", inventoryBalance);
       const { data: items, error } = await supabase
         .from("low_stock_items")
         .select(
@@ -303,7 +304,6 @@ export class InventoryService {
         console.error("Error fetching items with low stock threshold:", error);
         return [];
       }
-      console.log("djdjdjitems", items);
 
       return items as InventorySummary[];
     } catch (error) {
@@ -334,7 +334,8 @@ export class InventoryService {
         distributed_quantity,
         distribution_date,
         received_by,
-        session_term_id
+        session_term_id,
+        inventory_items(id, name, sku, categories(id, name))
       `
       );
 
@@ -391,12 +392,27 @@ export class InventoryService {
         if (!summaryMap[key]) {
           summaryMap[key] = {
             inventory_item_id: key,
-            total_distributed: 0,
-            total_received: 0,
+            total_received_quantity: 0,
+            total_distributed_quantity: 0,
             balance_quantity: 0,
           };
         }
-        summaryMap[key].total_distributed += dist.distributed_quantity || 0;
+        summaryMap[key].total_received_quantity +=
+          dist.distributed_quantity || 0;
+
+        // Attach item details once (from class distributions query)
+        if (!summaryMap[key].inventory_items && (dist as any).inventory_items) {
+          const it = (dist as any).inventory_items;
+          summaryMap[key].inventory_items = {
+            id: it.id,
+            name: it.name,
+            sku: it.sku,
+            categories: it.categories
+              ? { id: it.categories.id, name: it.categories.name }
+              : null,
+          };
+          summaryMap[key].item_name = it.name;
+        }
 
         // Track last distribution date
         if (
@@ -414,18 +430,19 @@ export class InventoryService {
         if (!summaryMap[key]) {
           summaryMap[key] = {
             inventory_item_id: key,
-            total_distributed: 0,
-            total_received: 0,
+            total_received_quantity: 0,
+            total_distributed_quantity: 0,
             balance_quantity: 0,
           };
         }
-        summaryMap[key].total_received += log.qty || 0;
+        summaryMap[key].total_distributed_quantity += log.qty || 0;
       }
 
       // Compute balance
       for (const key of Object.keys(summaryMap)) {
         const item = summaryMap[key];
-        item.balance_quantity = item.total_distributed - item.total_received;
+        item.balance_quantity =
+          item.total_received_quantity - item.total_distributed_quantity;
       }
 
       return Object.values(summaryMap);

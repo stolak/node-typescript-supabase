@@ -207,7 +207,7 @@ router.get("/low/stock", async (req: Request, res: Response) => {
 
 /**
  * @openapi
- * /api/v1/inventory_summary/distribution-summary/query:
+ * /api/v1/inventory_summary/distribution-collection/query:
  *   get:
  *     summary: Get distribution summary for class inventory and student logs
  *     tags:
@@ -250,7 +250,7 @@ router.get("/low/stock", async (req: Request, res: Response) => {
  *         description: Internal server error
  */
 router.get(
-  "/distribution-summary/query",
+  "/distribution-collection/query",
   async (req: Request, res: Response) => {
     try {
       const { inventory_item_id, class_id, session_term_id, teacher_id } =
@@ -340,6 +340,24 @@ export default router;
  *         inventory_item_id:
  *           type: string
  *           format: uuid
+ *         inventory_items:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *               format: uuid
+ *             name:
+ *               type: string
+ *             sku:
+ *               type: string
+ *             categories:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   format: uuid
+ *                 name:
+ *                   type: string
  *         total_distributed:
  *           type: integer
  *           description: Total quantity distributed to classes

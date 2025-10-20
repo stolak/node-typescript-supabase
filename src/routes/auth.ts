@@ -53,28 +53,26 @@ router.post("/login", async (req: Request, res: Response) => {
       }
     );
     const data = await response.json();
-    console.log("data", data);
+
     if (!response.ok) {
       return res
         .status(401)
         .json({ error: data.error || "Invalid credentials" });
     }
-    console.log("data.user.id", data.user.id);
+
     const id = data.user.id;
-    console.log("id", id);
+
     const { data: teacherData, error: teacherError } = await supabase
       .from("class_teachers")
       .select("*")
       .eq("teacher_id", id)
       .single();
     if (teacherError) {
-      console.log("teacherError", teacherError);
       return res.json({
         ...data,
         teacher_id: null,
       });
     }
-    console.log("teacherData", teacherData);
     res.json({
       ...data,
       teacher_id: teacherData?.id,

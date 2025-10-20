@@ -321,7 +321,6 @@ router.delete("/:id", async (req: Request, res: Response) => {
  */
 router.get("/distributions/query", async (req: Request, res: Response) => {
   try {
-    console.log("req.query", req.query);
     const { class_id, session_term_id, page = 1, limit = 10 } = req.query;
 
     // Parse pagination parameters
@@ -392,7 +391,6 @@ router.get("/distributions/query", async (req: Request, res: Response) => {
 
 router.post("/distributions", async (req: Request, res: Response) => {
   const body = req.body;
-  console.log("body", body);
   if (
     !body.class_id ||
     !body.inventory_item_id ||
