@@ -76,6 +76,8 @@ const router = Router();
  *                 format: uuid
  *               barcode:
  *                 type: string
+ *               low_stock_threshold:
+ *                 type: integer
  *               cost_price:
  *                 type: number
  *               selling_price:
@@ -203,6 +205,8 @@ router.post("/", async (req: Request, res: Response) => {
  *                 format: uuid
  *               barcode:
  *                 type: string
+ *               low_stock_threshold:
+ *                 type: integer
  *               cost_price:
  *                 type: number
  *               selling_price:
