@@ -480,6 +480,23 @@ export class InventoryService {
       throw error;
     }
   }
+
+  async getAllInventoryItems(): Promise<{ id: string; name: string }[]> {
+    try {
+      const { data, error } = await supabase
+        .from("inventory_items")
+        .select("id, name")
+        .order("name", { ascending: true });
+      if (error) {
+        console.error("Error fetching all inventory items:", error);
+        throw error;
+      }
+      return data as { id: string; name: string }[];
+    } catch (error) {
+      console.error("Error in getAllInventoryItems service:", error);
+      throw error;
+    }
+  }
 }
 
 // Export a singleton instance

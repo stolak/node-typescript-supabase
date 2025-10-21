@@ -90,16 +90,28 @@ router.get("/:inventoryId", async (req: Request, res: Response) => {
 router.post("/bulk", async (req: Request, res: Response) => {
   try {
     const { inventory_ids } = req.body;
-
+    let ids: string[] = [];
+    const allIDsValid: { id: string; name: string }[] =
+      await inventoryService.getAllInventoryItems();
+    const validIDs = allIDsValid.map(
+      (item: { id: string; name: string }) => item.id
+    );
     if (!Array.isArray(inventory_ids) || inventory_ids.length === 0) {
+      ids = validIDs;
+    } else {
+      ids = inventory_ids.filter((id) => validIDs.includes(id));
+    }
+
+    // get all valid inventory ids
+
+    if (ids.length === 0) {
       return res.status(400).json({
-        error: "inventory_ids must be a non-empty array",
+        error: "Invalid inventory IDs",
+        invalid_ids: inventory_ids,
       });
     }
 
-    const summaries = await inventoryService.getBulkInventorySummary(
-      inventory_ids
-    );
+    const summaries = await inventoryService.getBulkInventorySummary(ids);
     res.json(summaries);
   } catch (error) {
     console.error("Error fetching bulk inventory summaries:", error);
