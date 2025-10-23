@@ -13,12 +13,33 @@ const inventoryService = new InventoryService();
  *       - InventoryTransactions
  *     parameters:
  *       - in: query
+ *         name: item_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: false
+ *         description: Filter by inventory item ID
+ *       - in: query
  *         name: transaction_type
  *         schema:
  *           type: string
  *           enum: [purchase, sale, distribution, return]
  *         required: false
  *         description: Filter by transaction type
+ *       - in: query
+ *         name: from_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         required: false
+ *         description: Filter transactions from this date (inclusive)
+ *       - in: query
+ *         name: to_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         required: false
+ *         description: Filter transactions to this date (inclusive)
  *     responses:
  *       200:
  *         description: List of inventory transactions
@@ -47,15 +68,20 @@ const inventoryService = new InventoryService();
  *               $ref: '#/components/schemas/InventoryTransaction'
  */
 router.get("/", async (_req: Request, res: Response) => {
-  const { data, error } = await supabase
-    .from("inventory_transactions")
-    .select(
-      `*, inventory_items(id, name, categories(id, name)), suppliers(id, name)`
-    );
+  const { item_id, transaction_type, from_date, to_date } = _req.query;
 
-  if (error) {
-    return res.status(500).json({ error: error.message });
-  }
+  let query = supabase.from("inventory_transactions").select(`
+    *,
+    inventory_items(id, name, categories(id, name)),
+    suppliers(id, name)
+  `);
+  if (item_id) query = query.eq("item_id", item_id);
+  if (transaction_type) query = query.eq("transaction_type", transaction_type);
+  if (from_date) query = query.gte("transaction_date", from_date);
+  if (to_date) query = query.lte("transaction_date", to_date);
+  const { data, error } = await query.order("transaction_date", {
+    ascending: false,
+  });
   res.json(data);
 });
 
@@ -111,7 +137,6 @@ router.post("/", async (req: Request, res: Response) => {
     .insert([
       {
         ...body,
-        receiver_id: req.user?.id || body.receiver_id || "",
         created_by: req.user?.id || body.created_by || "",
       },
     ])
