@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { supabase } from "../supabaseClient";
+import { inventoryService } from "../services/inventoryService";
 
 const router = Router();
 
@@ -137,6 +138,22 @@ router.post("/", async (req: Request, res: Response) => {
         "You are not authorized to perform this action. You must be a teacher to perform this action",
     });
   }
+  const currentItemAvailable = await inventoryService.getDistributionSummary({
+    class_id: body.class_id,
+    teacher_id: teacherData?.id,
+    inventory_item_id: body.inventory_item_id,
+  });
+  if (currentItemAvailable?.length === 0) {
+    return res.status(400).json({
+      error:
+        "There is no sufficient stock to update this record. Please contact the administrator to update the stock",
+    });
+  }
+  if (Number(currentItemAvailable?.[0]?.balance_quantity) < Number(body.qty)) {
+    return res.status(400).json({
+      error: `There is no sufficient stock to update this record. Only ${currentItemAvailable?.[0]?.balance_quantity} items are available`,
+    });
+  }
   const { data, error } = await supabase
     .from("student_inventory_log")
     .insert([{ ...body, created_by: req.user?.id, given_by: teacherData?.id }])
@@ -196,6 +213,34 @@ router.post("/bulk_upsert", async (req: Request, res: Response) => {
     created_by: req.user?.id,
     given_by: teacherData?.id,
   }));
+  // GET sum of qty for each inventory item
+  let itemWithQty: Record<string, number> = {};
+  for (const rec of finalRecords) {
+    if (itemWithQty[rec?.inventory_item_id as string]) {
+      itemWithQty[rec.inventory_item_id as string] += Number(rec.qty);
+    } else {
+      itemWithQty[rec.inventory_item_id as string] = Number(rec.qty);
+    }
+  }
+  for (const item of Object.keys(itemWithQty)) {
+    const currentItemAvailable = await inventoryService.getDistributionSummary({
+      teacher_id: teacherData?.id,
+      inventory_item_id: item,
+    });
+    if (currentItemAvailable?.length <= 0) {
+      return res.status(400).json({
+        error:
+          "There is no sufficient stock to update this record. Please contact the administrator to update the stock",
+      });
+    }
+    if (
+      Number(currentItemAvailable?.[0]?.balance_quantity) < itemWithQty[item]
+    ) {
+      return res.status(400).json({
+        error: `There is no sufficient stock to update this record. Only ${currentItemAvailable?.[0]?.balance_quantity} items are available`,
+      });
+    }
+  }
   for (const rec of finalRecords) {
     if (
       !rec.student_id ||
@@ -207,7 +252,7 @@ router.post("/bulk_upsert", async (req: Request, res: Response) => {
     ) {
       return res.status(400).json({
         error:
-          "Each record must have student_id, class_id, session_term_id, inventory_item_id, and qty",
+          "Each record must have student, class, session term, inventory item, and quantity",
       });
     }
     if (rec.qty <= 0) {
@@ -216,6 +261,9 @@ router.post("/bulk_upsert", async (req: Request, res: Response) => {
       });
     }
   }
+  const currentItemAvailable = await inventoryService.getDistributionSummary({
+    teacher_id: teacherData?.id,
+  });
   // Upsert using Supabase (PostgREST) - match on unique constraint
   const { data, error } = await supabase
     .from("student_inventory_log")
