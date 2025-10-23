@@ -49,7 +49,12 @@ router.post("/login", async (req: Request, res: Response) => {
           apikey: process.env.SUPABASE_ANON_KEY!,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email,
+          password,
+          // Optional: Set custom expiration (in seconds)
+          // expires_in: 3600 * 24 // 24 hours
+        }),
       }
     );
     const data = await response.json();
@@ -80,6 +85,72 @@ router.post("/login", async (req: Request, res: Response) => {
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Login failed" });
+  }
+});
+
+/**
+ * @openapi
+ * /api/v1/auth/refresh:
+ *   post:
+ *     summary: Refresh access token using refresh token
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refresh_token
+ *             properties:
+ *               refresh_token:
+ *                 type: string
+ *                 description: The refresh token
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       401:
+ *         description: Invalid refresh token
+ */
+router.post("/refresh", async (req: Request, res: Response) => {
+  const { refresh_token } = req.body;
+  if (!refresh_token) {
+    return res.status(400).json({ error: "Refresh token is required" });
+  }
+
+  try {
+    const response = await fetch(
+      `${process.env.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,
+      {
+        method: "POST",
+        headers: {
+          apikey: process.env.SUPABASE_ANON_KEY!,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          refresh_token,
+          // Optional: Set custom expiration for new token
+          // expires_in: 3600 * 24 // 24 hours
+        }),
+      }
+    );
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res
+        .status(401)
+        .json({ error: data.error || "Invalid refresh token" });
+    }
+
+    res.json(data);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Token refresh failed" });
   }
 });
 
