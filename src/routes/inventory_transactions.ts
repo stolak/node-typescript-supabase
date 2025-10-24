@@ -20,6 +20,13 @@ const inventoryService = new InventoryService();
  *         required: false
  *         description: Filter by inventory item ID
  *       - in: query
+ *         name: supplier_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: false
+ *         description: Filter by supplier ID
+ *       - in: query
  *         name: transaction_type
  *         schema:
  *           type: string
@@ -68,14 +75,16 @@ const inventoryService = new InventoryService();
  *               $ref: '#/components/schemas/InventoryTransaction'
  */
 router.get("/", async (_req: Request, res: Response) => {
-  const { item_id, transaction_type, from_date, to_date } = _req.query;
+  const { item_id, transaction_type, from_date, to_date, supplier_id } =
+    _req.query;
 
   let query = supabase.from("inventory_transactions").select(`
     *,
-    inventory_items(id, name, categories(id, name)),
+    inventory_items(id, name, categories(id, name), uoms(id, name)),
     suppliers(id, name)
   `);
   if (item_id) query = query.eq("item_id", item_id);
+  if (supplier_id) query = query.eq("supplier_id", supplier_id);
   if (transaction_type) query = query.eq("transaction_type", transaction_type);
   if (from_date) query = query.gte("transaction_date", from_date);
   if (to_date) query = query.lte("transaction_date", to_date);
