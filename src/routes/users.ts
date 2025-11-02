@@ -129,6 +129,7 @@ router.post(
       password,
       phone,
       user_metadata: { roles, name },
+      email_confirm: true,
     });
     if (error) return res.status(500).json({ error: error.message });
     res.status(201).json(data.user);

@@ -1,4 +1,16 @@
 import swaggerJsdoc from "swagger-jsdoc";
+import dotenv from "dotenv";
+import glob from "glob";
+dotenv.config();
+const excludeEnv = process.env.EXCLUDE_ROUTES;
+console.log("EXCLUDE_ROUTES env variable:", excludeEnv);
+const excludeList = excludeEnv
+  ? excludeEnv.split(",").map((s) => s.trim())
+  : ["src/routes/do-not-exclude.ts"];
+console.log("Excluding the following files from Swagger docs:", excludeList);
+const files = glob
+  .sync("src/**/*.ts", { nodir: true })
+  .filter((f) => !excludeList.some((ex) => f.includes(ex)));
 
 export const swaggerOptions = {
   definition: {
@@ -29,7 +41,7 @@ export const swaggerOptions = {
       },
     ],
   },
-  apis: ["src/**/*.ts"],
+  apis: files, // ["src/**/*.ts"],
 };
 
 export const swaggerSpec = swaggerJsdoc(swaggerOptions);

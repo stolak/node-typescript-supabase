@@ -85,6 +85,7 @@ router.post("/", async (req: Request, res: Response) => {
       email: body.email,
       password: body.password || "123456",
       user_metadata: { name: body.name, roles: ["teacher"] },
+      email_confirm: true, // <-- auto-confirm email so user can sign in immediately
     });
   if (createUserError) {
     return res.status(500).json({ error: createUserError.message });
