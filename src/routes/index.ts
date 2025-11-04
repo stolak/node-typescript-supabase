@@ -13,6 +13,7 @@ import brandsRouter from "./brands";
 import uomsRouter from "./uoms";
 import inventoryItemsRouter from "./inventory_items";
 import suppliersRouter from "./suppliers";
+import supplierTransactionsRouter from "./supplier_transactions";
 import academicSessionTermsRouter from "./academic_session_terms";
 import classInventoryEntitlementsRouter from "./class_inventory_entitlements";
 import studentInventoryLogRouter from "./student_inventory_log";
@@ -29,6 +30,11 @@ router.use("/brands", authenticateSupabaseToken, brandsRouter);
 router.use("/uoms", authenticateSupabaseToken, uomsRouter);
 router.use("/inventory_items", authenticateSupabaseToken, inventoryItemsRouter);
 router.use("/suppliers", authenticateSupabaseToken, suppliersRouter);
+router.use(
+  "/supplier_transactions",
+  authenticateSupabaseToken,
+  supplierTransactionsRouter
+);
 router.use(
   "/inventory_transactions",
   authenticateSupabaseToken,
