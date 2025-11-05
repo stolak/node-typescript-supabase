@@ -175,6 +175,7 @@ router.post("/", async (req: Request, res: Response) => {
       debit: 0,
       reference_no: data.id,
       notes: `Being cost of purchase transaction ${data.id}`,
+      created_by: req.user?.id || body.created_by || "",
     });
   }
 
@@ -186,6 +187,7 @@ router.post("/", async (req: Request, res: Response) => {
       debit: amount_paid,
       reference_no: data.id,
       notes: `Payment for purchase transaction ${data.id}`,
+      created_by: req.user?.id || body.created_by || "",
     });
   }
   res.status(201).json(data);
