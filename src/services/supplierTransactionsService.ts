@@ -16,6 +16,12 @@ export interface SupplierTransaction extends SupplierTransactionInput {
   updated_at: string;
 }
 
+export interface SupplierBalance {
+  supplier_id: string;
+  supplier_name: string;
+  balance: number;
+}
+
 export default class SupplierTransactionsService {
   private table = "supplier_transactions";
 
@@ -92,5 +98,13 @@ export default class SupplierTransactionsService {
       .select();
     if (error) throw error;
     return data as SupplierTransaction[];
+  }
+
+  async getSupplierBalances(): Promise<SupplierBalance[]> {
+    const { data, error } = await supabase
+      .from("supplier_balances")
+      .select("*");
+    if (error) throw error;
+    return data as SupplierBalance[];
   }
 }

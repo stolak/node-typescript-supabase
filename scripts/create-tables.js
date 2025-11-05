@@ -326,7 +326,17 @@ AS $$
   ORDER BY i.name;
 $$;
 
-
+-- Supplier Balance View
+DROP VIEW IF EXISTS supplier_balances;
+CREATE OR REPLACE VIEW supplier_balances AS
+SELECT 
+  s.id AS supplier_id,
+  s.name AS supplier_name,
+  COALESCE(SUM(st.credit - st.debit), 0) AS balance
+FROM suppliers s
+LEFT JOIN supplier_transactions st ON s.id = st.supplier_id
+GROUP BY s.id, s.name
+ORDER BY s.name;
 
 `;
 
