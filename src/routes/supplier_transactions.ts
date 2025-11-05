@@ -98,7 +98,7 @@ router.post(
         debit: Number(debit),
         reference_no,
         notes,
-        created_by: req.user?.id,
+        created_by: req.user?.id || created_by,
       };
       const data = await service.create(payload);
       res.status(201).json(data);
