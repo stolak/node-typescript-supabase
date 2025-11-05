@@ -1,7 +1,9 @@
 import { Router, Request, Response } from "express";
 import { supabase } from "../supabaseClient";
+import SupplierTransactionsService from "../services/supplierTransactionsService";
 
 const router = Router();
+const supplierTransactionsService = new SupplierTransactionsService();
 
 /**
  * @openapi
@@ -101,6 +103,36 @@ router.post("/", async (req: Request, res: Response) => {
     .single();
   if (error) return res.status(500).json({ error: error.message });
   res.status(201).json(data);
+});
+
+/**
+ * @openapi
+ * /api/v1/suppliers/balances:
+ *   get:
+ *     summary: Get supplier balances (credit - debit)
+ *     description: Returns a list of all suppliers with their calculated balance from transactions
+ *     tags:
+ *       - Suppliers
+ *     responses:
+ *       200:
+ *         description: List of supplier balances
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/SupplierBalance'
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/balances", async (_req: Request, res: Response) => {
+  try {
+    const balances = await supplierTransactionsService.getSupplierBalances();
+    res.json(balances);
+  } catch (error) {
+    console.error("Error fetching supplier balances:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 /**
@@ -294,4 +326,18 @@ export default router;
  *         updated_at:
  *           type: string
  *           format: date-time
+ *     SupplierBalance:
+ *       type: object
+ *       properties:
+ *         supplier_id:
+ *           type: string
+ *           format: uuid
+ *           description: The supplier ID
+ *         supplier_name:
+ *           type: string
+ *           description: The supplier name
+ *         balance:
+ *           type: number
+ *           format: numeric
+ *           description: Calculated balance (credit - debit). Positive means supplier owes us, negative means we owe supplier.
  */

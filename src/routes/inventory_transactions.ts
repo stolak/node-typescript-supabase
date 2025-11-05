@@ -1,9 +1,10 @@
 import { Router, Request, Response } from "express";
 import { supabase } from "../supabaseClient";
 import { InventoryService } from "../services/inventoryService";
-
+import SupplierTransactionsService from "../services/supplierTransactionsService";
 const router = Router();
 const inventoryService = new InventoryService();
+const supplierTransactionsService = new SupplierTransactionsService();
 /**
  * @openapi
  * /api/v1/inventory_transactions:
@@ -96,6 +97,13 @@ router.get("/", async (_req: Request, res: Response) => {
 
 router.post("/", async (req: Request, res: Response) => {
   const body = req.body;
+  const amount_paid = Number(body.amount_paid) || 0;
+  delete body.amount_paid;
+  if (amount_paid > 0 && !body.supplier_id) {
+    return res
+      .status(400)
+      .json({ error: "supplier_id is required when amount_paid is provided" });
+  }
 
   if (!body.item_id || !body.transaction_type) {
     return res.status(400).json({
@@ -155,6 +163,31 @@ router.post("/", async (req: Request, res: Response) => {
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
+  if (
+    body.transaction_type === "purchase" &&
+    body.supplier_id &&
+    body.in_cost
+  ) {
+    //record amount paid as supplier transaction
+    supplierTransactionsService.create({
+      supplier_id: body?.supplier_id,
+      credit: body?.in_cost,
+      debit: 0,
+      reference_no: data.id,
+      notes: `Being cost of purchase transaction ${data.id}`,
+    });
+  }
+
+  if (body.transaction_type === "purchase" && body.supplier_id && amount_paid) {
+    //record amount paid as supplier transaction
+    supplierTransactionsService.create({
+      supplier_id: body?.supplier_id,
+      credit: 0,
+      debit: amount_paid,
+      reference_no: data.id,
+      notes: `Payment for purchase transaction ${data.id}`,
+    });
+  }
   res.status(201).json(data);
 });
 
@@ -195,7 +228,7 @@ router.post("/", async (req: Request, res: Response) => {
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/InventoryTransactionInput'
+ *             $ref: '#/components/schemas/InventoryTransactionUpdate'
  *     responses:
  *       200:
  *         description: Inventory transaction updated
@@ -239,6 +272,11 @@ router.get("/:id", async (req: Request, res: Response) => {
 router.put("/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
   const body = req.body;
+
+  // Ensure amount_paid is not allowed on update
+  if (body && Object.prototype.hasOwnProperty.call(body, "amount_paid")) {
+    delete body.amount_paid;
+  }
 
   const { data, error } = await supabase
     .from("inventory_transactions")
@@ -802,12 +840,46 @@ router.put("/distributions/:id", async (req: Request, res: Response) => {
  *           type: string
  *         notes:
  *           type: string
+ *         amount_paid:
+ *           type: number
  *         transaction_date:
  *           type: string
  *           format: date-time
  *         created_by:
  *           type: string
  *           format: uuid
+ *     InventoryTransactionUpdate:
+ *       type: object
+ *       properties:
+ *         supplier_id:
+ *           type: string
+ *           format: uuid
+ *         receiver_id:
+ *           type: string
+ *           format: uuid
+ *         supplier_receiver:
+ *           type: string
+ *         transaction_type:
+ *           type: string
+ *           enum: [purchase, sale, distribution, return]
+ *         qty_in:
+ *           type: number
+ *         in_cost:
+ *           type: number
+ *         qty_out:
+ *           type: number
+ *         out_cost:
+ *           type: number
+ *         status:
+ *           type: string
+ *           enum: [pending, cancelled, deleted, completed]
+ *         reference_no:
+ *           type: string
+ *         notes:
+ *           type: string
+ *         transaction_date:
+ *           type: string
+ *           format: date-time
  */
 
 export default router;

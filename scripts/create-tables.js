@@ -91,7 +91,19 @@ CREATE TABLE IF NOT EXISTS suppliers (
   updated_at timestamptz default now()
 );
 
-
+-- Supplier Transactions
+CREATE TABLE IF NOT EXISTS supplier_transactions (
+  id uuid primary key default gen_random_uuid(),
+  supplier_id uuid references suppliers(id) ON DELETE CASCADE,
+  transaction_date timestamptz not null,
+  credit numeric(12,2) not null,
+  debit numeric(12,2) not null,
+  reference_no text,
+  notes text,
+  created_by uuid references auth.users(id) ON DELETE SET NULL,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
 
 -- School Classes
 CREATE TABLE IF NOT EXISTS school_classes (
@@ -314,7 +326,17 @@ AS $$
   ORDER BY i.name;
 $$;
 
-
+-- Supplier Balance View
+DROP VIEW IF EXISTS supplier_balances;
+CREATE OR REPLACE VIEW supplier_balances AS
+SELECT 
+  s.id AS supplier_id,
+  s.name AS supplier_name,
+  COALESCE(SUM(st.credit - st.debit), 0) AS balance
+FROM suppliers s
+LEFT JOIN supplier_transactions st ON s.id = st.supplier_id
+GROUP BY s.id, s.name
+ORDER BY s.name;
 
 `;
 
