@@ -43,6 +43,7 @@ const router = Router();
  *               $ref: '#/components/schemas/Brand'
  */
 router.get("/", async (_req: Request, res: Response) => {
+  console.log(_req);
   const { data, error } = await supabase.from("brands").select("*");
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
@@ -127,6 +128,7 @@ router.post("/", async (req: Request, res: Response) => {
  *         description: Brand not found
  */
 router.get("/:id", async (req: Request, res: Response) => {
+  console.log(req);
   const { id } = req.params;
   const { data, error } = await supabase
     .from("brands")

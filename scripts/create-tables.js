@@ -18,6 +18,25 @@ CREATE TABLE IF NOT EXISTS categories (
   updated_at timestamptz default now()
 );
 
+-- Roles
+CREATE TABLE IF NOT EXISTS roles (
+  code text primary key,
+  name text not null,
+  status text not null default 'active',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Role Privileges
+CREATE TABLE IF NOT EXISTS role_privileges (
+  id uuid primary key default gen_random_uuid(),
+  role_code text references roles(code) ON DELETE CASCADE,
+  description text not null,
+  status text not null default 'active',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
 -- Sub-categories
 CREATE TABLE IF NOT EXISTS sub_categories (
   id uuid primary key default gen_random_uuid(),
