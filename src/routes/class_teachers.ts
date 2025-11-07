@@ -84,7 +84,7 @@ router.post("/", async (req: Request, res: Response) => {
     await supabase.auth.admin.createUser({
       email: body.email,
       password: body.password || "123456",
-      user_metadata: { name: body.name, roles: ["teacher"] },
+      user_metadata: { name: body.name, roles: ["TEACHER"] },
       email_confirm: true, // <-- auto-confirm email so user can sign in immediately
     });
   if (createUserError) {

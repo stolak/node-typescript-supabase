@@ -1,9 +1,491 @@
-type RouteDefinition = {
+export type RouteDefinition = {
   description: string;
   route: string;
 };
 
-type RoutesJson = Record<string, RouteDefinition[]>;
+export const routesJson: RoutesJson = {
+  brands: [
+    {
+      description: "Get all brands",
+      route: "GET /api/v1/brands",
+    },
+    {
+      description: "Create a new brand",
+      route: "POST /api/v1/brands",
+    },
+    {
+      description: "Get a brand by ID",
+      route: "GET /api/v1/brands/{id}",
+    },
+    {
+      description: "Update a brand by ID",
+      route: "PUT /api/v1/brands/{id}",
+    },
+    {
+      description: "Delete a brand by ID",
+      route: "DELETE /api/v1/brands/{id}",
+    },
+  ],
+  categories: [
+    {
+      description: "Get all categories",
+      route: "GET /api/v1/categories",
+    },
+    {
+      description: "Create a new category",
+      route: "POST /api/v1/categories",
+    },
+    {
+      description: "Get a category by ID",
+      route: "GET /api/v1/categories/{id}",
+    },
+    {
+      description: "Update a category by ID",
+      route: "PUT /api/v1/categories/{id}",
+    },
+    {
+      description: "Delete a category by ID",
+      route: "DELETE /api/v1/categories/{id}",
+    },
+  ],
+  sub_categories: [
+    {
+      description: "Get all sub-categories",
+      route: "GET /api/v1/sub_categories",
+    },
+    {
+      description: "Create a new sub-category",
+      route: "POST /api/v1/sub_categories",
+    },
+    {
+      description: "Get a sub-category by ID",
+      route: "GET /api/v1/sub_categories/{id}",
+    },
+    {
+      description: "Update a sub-category by ID",
+      route: "PUT /api/v1/sub_categories/{id}",
+    },
+    {
+      description: "Delete a sub-category by ID",
+      route: "DELETE /api/v1/sub_categories/{id}",
+    },
+  ],
+  uoms: [
+    {
+      description: "Get all units of measure",
+      route: "GET /api/v1/uoms",
+    },
+    {
+      description: "Create a new unit of measure",
+      route: "POST /api/v1/uoms",
+    },
+    {
+      description: "Get a unit of measure by ID",
+      route: "GET /api/v1/uoms/{id}",
+    },
+    {
+      description: "Update a unit of measure by ID",
+      route: "PUT /api/v1/uoms/{id}",
+    },
+    {
+      description: "Delete a unit of measure by ID",
+      route: "DELETE /api/v1/uoms/{id}",
+    },
+  ],
+  academic_session_terms: [
+    {
+      description: "Get all academic session terms",
+      route: "GET /api/v1/academic_session_terms",
+    },
+    {
+      description: "Create a new academic session term",
+      route: "POST /api/v1/academic_session_terms",
+    },
+    {
+      description: "Get an academic session term by ID",
+      route: "GET /api/v1/academic_session_terms/{id}",
+    },
+    {
+      description: "Update an academic session term by ID",
+      route: "PUT /api/v1/academic_session_terms/{id}",
+    },
+    {
+      description: "Delete an academic session term by ID",
+      route: "DELETE /api/v1/academic_session_terms/{id}",
+    },
+  ],
+  school_classes: [
+    {
+      description: "Get all school classes",
+      route: "GET /api/v1/school_classes",
+    },
+    {
+      description: "Create a new school class",
+      route: "POST /api/v1/school_classes",
+    },
+    {
+      description: "Get a school class by ID",
+      route: "GET /api/v1/school_classes/{id}",
+    },
+    {
+      description: "Update a school class by ID",
+      route: "PUT /api/v1/school_classes/{id}",
+    },
+    {
+      description: "Delete a school class by ID",
+      route: "DELETE /api/v1/school_classes/{id}",
+    },
+  ],
+  students: [
+    {
+      description: "Get all students",
+      route: "GET /api/v1/students",
+    },
+    {
+      description: "Create a new student",
+      route: "POST /api/v1/students",
+    },
+    {
+      description: "Get a student by ID",
+      route: "GET /api/v1/students/{id}",
+    },
+    {
+      description: "Update a student by ID",
+      route: "PUT /api/v1/students/{id}",
+    },
+    {
+      description: "Delete a student by ID",
+      route: "DELETE /api/v1/students/{id}",
+    },
+  ],
+  class_teachers: [
+    {
+      description: "Get all class teachers",
+      route: "GET /api/v1/class_teachers",
+    },
+    {
+      description: "Create a new class teacher",
+      route: "POST /api/v1/class_teachers",
+    },
+    {
+      description: "Get a class teacher by ID",
+      route: "GET /api/v1/class_teachers/{id}",
+    },
+    {
+      description: "Update a class teacher by ID",
+      route: "PUT /api/v1/class_teachers/{id}",
+    },
+    {
+      description: "Delete a class teacher by ID",
+      route: "DELETE /api/v1/class_teachers/{id}",
+    },
+  ],
+  inventory_items: [
+    {
+      description: "Get all inventory items",
+      route: "GET /api/v1/inventory_items",
+    },
+    {
+      description: "Create a new inventory item",
+      route: "POST /api/v1/inventory_items",
+    },
+    {
+      description: "Get an inventory item by ID",
+      route: "GET /api/v1/inventory_items/{id}",
+    },
+    {
+      description: "Update an inventory item by ID",
+      route: "PUT /api/v1/inventory_items/{id}",
+    },
+    {
+      description: "Delete an inventory item by ID",
+      route: "DELETE /api/v1/inventory_items/{id}",
+    },
+  ],
+  inventory_transactions: [
+    {
+      description: "Get all inventory transactions",
+      route: "GET /api/v1/inventory_transactions",
+    },
+    {
+      description:
+        "Create a new inventory transaction (purchase or sale or distribution or return)",
+      route: "POST /api/v1/inventory_transactions",
+    },
+    {
+      description: "Get an inventory transaction by ID",
+      route: "GET /api/v1/inventory_transactions/{id}",
+    },
+    {
+      description: "Update an inventory transaction by ID",
+      route: "PUT /api/v1/inventory_transactions/{id}",
+    },
+    {
+      description: "Delete an inventory transaction by ID",
+      route: "DELETE /api/v1/inventory_transactions/{id}",
+    },
+    {
+      description: "Get class inventory distributions with optional filtering",
+      route: "GET /api/v1/inventory_transactions/distributions/query",
+    },
+    {
+      description: "Distribute inventory items to to the specified class",
+      route: "POST /api/v1/inventory_transactions/distributions",
+    },
+    {
+      description: "Update inventory distribution by ID",
+      route: "PUT /api/v1/inventory_transactions/distributions/{id}",
+    },
+  ],
+  inventory_summary: [
+    {
+      description: "Get inventory summary by inventory ID",
+      route: "GET /api/v1/inventory_summary/{inventoryId}",
+    },
+    {
+      description: "Get inventory summaries for multiple items",
+      route: "POST /api/v1/inventory_summary/bulk",
+    },
+    {
+      description: "Get transaction summary by type for an inventory item",
+      route:
+        "GET /api/v1/inventory_summary/{inventoryId}/transactions/{transactionType}",
+    },
+    {
+      description: "Get all low stock inventory items",
+      route: "GET /api/v1/inventory_summary/low/stock",
+    },
+    {
+      description:
+        "Get distribution collection summary for class inventory and student logs",
+      route: "GET /api/v1/inventory_summary/distribution-collection/query",
+    },
+  ],
+  suppliers: [
+    {
+      description: "Get all suppliers",
+      route: "GET /api/v1/suppliers",
+    },
+    {
+      description: "Create a new supplier",
+      route: "POST /api/v1/suppliers",
+    },
+    {
+      description: "Get supplier balances (credit - debit)",
+      route: "GET /api/v1/suppliers/balances",
+    },
+    {
+      description: "Get a supplier by ID",
+      route: "GET /api/v1/suppliers/{id}",
+    },
+    {
+      description: "Update a supplier by ID",
+      route: "PUT /api/v1/suppliers/{id}",
+    },
+    {
+      description: "Delete a supplier by ID",
+      route: "DELETE /api/v1/suppliers/{id}",
+    },
+  ],
+  supplier_transactions: [
+    {
+      description: "Get supplier transactions",
+      route: "GET /api/v1/supplier_transactions",
+    },
+    {
+      description: "Create a supplier transaction",
+      route: "POST /api/v1/supplier_transactions",
+    },
+    {
+      description: "Get a supplier transaction by id",
+      route: "GET /api/v1/supplier_transactions/{id}",
+    },
+    {
+      description: "Update a supplier transaction",
+      route: "PUT /api/v1/supplier_transactions/{id}",
+    },
+    {
+      description: "Delete a supplier transaction",
+      route: "DELETE /api/v1/supplier_transactions/{id}",
+    },
+    {
+      description: "Bulk upsert supplier transactions",
+      route: "POST /api/v1/supplier_transactions/bulk_upsert",
+    },
+  ],
+  class_inventory_entitlements: [
+    {
+      description: "Get all class inventory entitlements",
+      route: "GET /api/v1/class_inventory_entitlements",
+    },
+    {
+      description: "Create a new class inventory entitlement",
+      route: "POST /api/v1/class_inventory_entitlements",
+    },
+    {
+      description: "Bulk upsert class inventory entitlements",
+      route: "POST /api/v1/class_inventory_entitlements/bulk_upsert",
+    },
+    {
+      description: "Get a class inventory entitlement by ID",
+      route: "GET /api/v1/class_inventory_entitlements/{id}",
+    },
+    {
+      description: "Update a class inventory entitlement by ID",
+      route: "PUT /api/v1/class_inventory_entitlements/{id}",
+    },
+    {
+      description: "Delete a class inventory entitlement by ID",
+      route: "DELETE /api/v1/class_inventory_entitlements/{id}",
+    },
+  ],
+  student_inventory_collection: [
+    {
+      description: "Get all student inventory logs",
+      route: "GET /api/v1/student_inventory_collection",
+    },
+    {
+      description: "Create a new student inventory collection",
+      route: "POST /api/v1/student_inventory_collection",
+    },
+    {
+      description: "Bulk upsert student inventory collections",
+      route: "POST /api/v1/student_inventory_collection/bulk_upsert",
+    },
+    {
+      description: "Get a student inventory collection by ID",
+      route: "GET /api/v1/student_inventory_collection/{id}",
+    },
+    {
+      description: "Update a student inventory collection by ID",
+      route: "PUT /api/v1/student_inventory_collection/{id}",
+    },
+    {
+      description: "Delete a student inventory collection by ID",
+      route: "DELETE /api/v1/student_inventory_collection/{id}",
+    },
+  ],
+  auth: [
+    {
+      description: "User login with email and password",
+      route: "POST /api/v1/auth/login",
+    },
+    {
+      description: "Refresh access token using refresh token",
+      route: "POST /api/v1/auth/refresh",
+    },
+    {
+      description: "Test authentication endpoint",
+      route: "GET /api/v1/auth/test",
+    },
+    {
+      description: "Protected endpoint requiring Supabase authentication",
+      route: "GET /api/v1/auth/protected",
+    },
+  ],
+  users: [
+    {
+      description: "Get all users",
+      route: "GET /api/v1/users",
+    },
+    {
+      description: "Get user by ID",
+      route: "GET /api/v1/users/{id}",
+    },
+    {
+      description: "Create a new user",
+      route: "POST /api/v1/users",
+    },
+    {
+      description: "Update a user by ID",
+      route: "PUT /api/v1/users/{id}",
+    },
+    {
+      description: "Delete a user by ID",
+      route: "DELETE /api/v1/users/{id}",
+    },
+  ],
+  notifications: [
+    {
+      description: "Send test email",
+      route: "POST /api/v1/notifications/test-email",
+    },
+    {
+      description: "Send low stock alert email",
+      route: "POST /api/v1/notifications/low-stock-alert",
+    },
+    {
+      description: "Send welcome email to new user",
+      route: "POST /api/v1/notifications/welcome-email",
+    },
+    {
+      description: "Send password reset email",
+      route: "POST /api/v1/notifications/password-reset",
+    },
+    {
+      description: "Send daily inventory summary email",
+      route: "POST /api/v1/notifications/daily-summary",
+    },
+    {
+      description: "Test email service connection",
+      route: "GET /api/v1/notifications/test-connection",
+    },
+    {
+      description: "Get email service configuration status",
+      route: "GET /api/v1/notifications/config-status",
+    },
+  ],
+  roles: [
+    {
+      description: "Get all roles",
+      route: "GET /api/v1/roles",
+    },
+    {
+      description: "Create a new role",
+      route: "POST /api/v1/roles",
+    },
+    {
+      description: "Get a role by code",
+      route: "GET /api/v1/roles/{code}",
+    },
+    {
+      description: "Update a role by code",
+      route: "PUT /api/v1/roles/{code}",
+    },
+    {
+      description: "Delete a role by code",
+      route: "DELETE /api/v1/roles/{code}",
+    },
+  ],
+  role_privileges: [
+    {
+      description: "Get all role privileges",
+      route: "GET /api/v1/role_privileges",
+    },
+    {
+      description: "Create a new role privilege",
+      route: "POST /api/v1/role_privileges",
+    },
+    {
+      description: "Upsert role privileges",
+      route: "POST /api/v1/role_privileges/upsert",
+    },
+    {
+      description: "Get a role privilege by ID",
+      route: "GET /api/v1/role_privileges/{id}",
+    },
+    {
+      description: "Update a role privilege by ID",
+      route: "PUT /api/v1/role_privileges/{id}",
+    },
+    {
+      description: "Delete a role privilege by ID",
+      route: "DELETE /api/v1/role_privileges/{id}",
+    },
+  ],
+};
+
+export type RoutesJson = Record<string, RouteDefinition[]>;
 
 /**
  * Checks whether a given URL matches any route defined in the routesJson structure.
@@ -41,7 +523,7 @@ export function routeExists(
 
 export default routeExists;
 
-type UserPrivilege = {
+export type UserPrivilege = {
   description: string;
   status: boolean;
 };
@@ -59,7 +541,6 @@ type PrivilegesOutput = Record<
  * @param userPrivileges - Flat list of privilege descriptions with status flags.
  */
 export function generatePrivileges(
-  routesJson: RoutesJson,
   userPrivileges: UserPrivilege[]
 ): PrivilegesOutput {
   const privilegesMap = new Map<string, boolean>();

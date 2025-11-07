@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS role_privileges (
   description text not null,
   status text not null default 'active',
   created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  updated_at timestamptz default now(),
+  unique (role_code, description)
 );
 
 -- Sub-categories

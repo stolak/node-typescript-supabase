@@ -426,6 +426,54 @@
       "description": "Get email service configuration status",
       "route": "GET /api/v1/notifications/config-status"
     }
+  ],
+  "roles": [
+    {
+      "description": "Get all roles",
+      "route": "GET /api/v1/roles"
+    },
+    {
+      "description": "Create a new role",
+      "route": "POST /api/v1/roles"
+    },
+    {
+      "description": "Get a role by code",
+      "route": "GET /api/v1/roles/{code}"
+    },
+    {
+      "description": "Update a role by code",
+      "route": "PUT /api/v1/roles/{code}"
+    },
+    {
+      "description": "Delete a role by code",
+      "route": "DELETE /api/v1/roles/{code}"
+    }
+  ],
+  "role_privileges": [
+    {
+      "description": "Get all role privileges",
+      "route": "GET /api/v1/role_privileges"
+    },
+    {
+      "description": "Create a new role privilege",
+      "route": "POST /api/v1/role_privileges"
+    },
+    {
+      "description": "Upsert role privileges",
+      "route": "POST /api/v1/role_privileges/upsert"
+    },
+    {
+      "description": "Get a role privilege by ID",
+      "route": "GET /api/v1/role_privileges/{id}"
+    },
+    {
+      "description": "Update a role privilege by ID",
+      "route": "PUT /api/v1/role_privileges/{id}"
+    },
+    {
+      "description": "Delete a role privilege by ID",
+      "route": "DELETE /api/v1/role_privileges/{id}"
+    }
   ]
 }
 

@@ -19,6 +19,8 @@ import classInventoryEntitlementsRouter from "./class_inventory_entitlements";
 import studentInventoryLogRouter from "./student_inventory_log";
 import inventorySummaryRouter from "./inventory_summary";
 import notificationsRouter from "./notifications";
+import rolesRouter from "./roles";
+import rolePrivilegesRouter from "./role_privileges";
 
 const router = Router();
 
@@ -65,5 +67,7 @@ router.use(
 );
 router.use("/notifications", notificationsRouter);
 router.use("/class_teachers", authenticateSupabaseToken, classTeachersRouter);
+router.use("/roles", authenticateSupabaseToken, rolesRouter);
+router.use("/role_privileges", authenticateSupabaseToken, rolePrivilegesRouter);
 
 export default router;
