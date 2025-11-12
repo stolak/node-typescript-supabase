@@ -525,6 +525,10 @@
     {
       "description": "Assign multiple menus to a role",
       "route": "POST /api/v1/role_menus/bulk"
+    },
+    {
+      "description": "Get menus assigned to a role",
+      "route": "GET /api/v1/role_menus/role/{role_code}"
     }
   ]
 }

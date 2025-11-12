@@ -214,6 +214,66 @@ router.post("/bulk", async (req: Request, res: Response) => {
 
 /**
  * @openapi
+ * /api/v1/role_menus/role/{role_code}:
+ *   get:
+ *     summary: Get menus assigned to a role
+ *     tags:
+ *       - RoleMenus
+ *     parameters:
+ *       - in: path
+ *         name: role_code
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Role code to filter assignments
+ *     responses:
+ *       200:
+ *         description: List of menus mapped to the role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/RoleMenu'
+ *       404:
+ *         description: No menus found for the specified role
+ */
+router.get("/role/:role_code", async (req: Request, res: Response) => {
+  const { role_code } = req.params;
+
+  const { data, error } = await supabase
+    .from("role_menus")
+    .select(
+      `
+      id,
+      role_code,
+      menu_id,
+      role:roles(
+        code,
+        name,
+        status
+      ),
+      menu:menus(
+        id,
+        route,
+        caption
+      )
+    `
+    )
+    .eq("role_code", role_code)
+    .order("menu(route)");
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  if (!data || !data.length) {
+    return res.status(404).json({ error: "No menus found for role" });
+  }
+
+  res.json(data);
+});
+
+/**
+ * @openapi
  * /api/v1/role_menus/{id}:
  *   get:
  *     summary: Get a role-menu assignment by ID
