@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS roles (
   updated_at timestamptz default now()
 );
 
+
+
 -- Role Privileges
 CREATE TABLE IF NOT EXISTS role_privileges (
   id uuid primary key default gen_random_uuid(),
@@ -254,6 +256,12 @@ CREATE TABLE IF NOT EXISTS student_inventory_log (
   updated_at timestamptz default now()
 );
 
+-- User Roles
+CREATE TABLE IF NOT EXISTS user_roles (
+  user_id uuid not null references auth.users(id) ON DELETE CASCADE,
+  role_id text not null references roles(code) ON DELETE CASCADE,
+  primary key (user_id, role_id)
+);
 
 -- Inventory Summary View
 DROP VIEW IF EXISTS inventory_item_summary;

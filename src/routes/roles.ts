@@ -201,4 +201,9 @@ export default router;
  *         updated_at:
  *           type: string
  *           format: date-time
+ *         privileges:
+ *           type: array
+ *           description: Optional list of privileges associated with the role
+ *           items:
+ *             $ref: '#/components/schemas/RolePrivilege'
  */
