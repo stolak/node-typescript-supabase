@@ -373,6 +373,10 @@
     {
       "description": "Protected endpoint requiring Supabase authentication",
       "route": "GET /api/v1/auth/protected"
+    },
+    {
+      "description": "Get all Supabase auth users",
+      "route": "GET /api/v1/auth/users"
     }
   ],
   "users": [

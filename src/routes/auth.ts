@@ -250,4 +250,42 @@ router.get("/protected", getUser, (req: Request, res: Response) => {
   });
 });
 
+/**
+ * @openapi
+ * /api/v1/auth/users:
+ *   get:
+ *     summary: Get all Supabase auth users
+ *     tags:
+ *       - Auth
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       500:
+ *         description: Failed to retrieve users
+ */
+router.get(
+  "/users",
+  authenticateSupabaseToken,
+  async (_req: Request, res: Response) => {
+    try {
+      const { data, error } = await supabase.auth.admin.listUsers();
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
+      res.json(data?.users ?? []);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      res.status(500).json({ error: "Failed to retrieve users" });
+    }
+  }
+);
+
 export default router;

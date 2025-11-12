@@ -46,8 +46,8 @@ CREATE TABLE IF NOT EXISTS role_menus (
 -- User Roles
 CREATE TABLE IF NOT EXISTS user_roles (
   user_id uuid not null references auth.users(id) ON DELETE CASCADE,
-  role_id text not null references roles(code) ON DELETE CASCADE,
-  primary key (user_id, role_id)
+  role_code text not null references roles(code) ON DELETE CASCADE,
+  primary key (user_id, role_code)
 );
 
 -- Role Privileges

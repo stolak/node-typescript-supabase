@@ -23,7 +23,7 @@ router.use(authorize(["admin", "super-admin"]));
  *         required: false
  *         description: Filter assignments by Supabase user ID
  *       - in: query
- *         name: role_id
+ *         name: role_code
  *         schema:
  *           type: string
  *         required: false
@@ -49,13 +49,13 @@ router.use(authorize(["admin", "super-admin"]));
  *             type: object
  *             required:
  *               - user_id
- *               - role_id
+ *               - role_code
  *             properties:
  *               user_id:
  *                 type: string
  *                 format: uuid
  *                 description: Supabase auth user ID
- *               role_id:
+ *               role_code:
  *                 type: string
  *                 description: Role code to assign
  *     responses:
@@ -73,12 +73,12 @@ router.use(authorize(["admin", "super-admin"]));
 router
   .route("/")
   .get(async (req: Request, res: Response) => {
-    const { user_id, role_id } = req.query;
+    const { user_id, role_code } = req.query;
 
     let query = supabase.from("user_roles").select(
       `
         user_id,
-        role_id,
+        role_code,
         role:roles(
           code,
           name,
@@ -97,8 +97,8 @@ router
     if (user_id) {
       query = query.eq("user_id", String(user_id));
     }
-    if (role_id) {
-      query = query.eq("role_id", String(role_id));
+    if (role_code) {
+      query = query.eq("role_code", String(role_code));
     }
 
     const { data, error } = await query;
@@ -108,21 +108,21 @@ router
     res.json(data);
   })
   .post(async (req: Request, res: Response) => {
-    const { user_id, role_id } = req.body ?? {};
+    const { user_id, role_code } = req.body ?? {};
 
-    if (!user_id || !role_id) {
+    if (!user_id || !role_code) {
       return res
         .status(400)
-        .json({ error: "user_id and role_id are required" });
+        .json({ error: "user_id and role_code are required" });
     }
 
     const { data, error } = await supabase
       .from("user_roles")
-      .insert([{ user_id, role_id }])
+      .insert([{ user_id, role_code }])
       .select(
         `
         user_id,
-        role_id,
+        role_code,
         role:roles(
           code,
           name,
@@ -185,7 +185,7 @@ router.get("/:user_id", async (req: Request, res: Response) => {
     .select(
       `
       user_id,
-      role_id,
+      role_code,
       role:roles(
         code,
         name,
@@ -213,7 +213,7 @@ router.get("/:user_id", async (req: Request, res: Response) => {
 
 /**
  * @openapi
- * /api/v1/user_roles/{user_id}/{role_id}:
+ * /api/v1/user_roles/{user_id}/{role_code}:
  *   delete:
  *     summary: Remove a role assignment from a user
  *     tags:
@@ -226,7 +226,7 @@ router.get("/:user_id", async (req: Request, res: Response) => {
  *           type: string
  *           format: uuid
  *       - in: path
- *         name: role_id
+ *         name: role_code
  *         required: true
  *         schema:
  *           type: string
@@ -236,14 +236,14 @@ router.get("/:user_id", async (req: Request, res: Response) => {
  *       404:
  *         description: Assignment not found
  */
-router.delete("/:user_id/:role_id", async (req: Request, res: Response) => {
-  const { user_id, role_id } = req.params;
+router.delete("/:user_id/:role_code", async (req: Request, res: Response) => {
+  const { user_id, role_code } = req.params;
 
   const { data, error } = await supabase
     .from("user_roles")
     .delete()
     .eq("user_id", user_id)
-    .eq("role_id", role_id)
+    .eq("role_code", role_code)
     .select();
 
   if (error) return res.status(500).json({ error: error.message });
@@ -267,7 +267,7 @@ export default router;
  *         user_id:
  *           type: string
  *           format: uuid
- *         role_id:
+ *         role_code:
  *           type: string
  *         role:
  *           nullable: true
