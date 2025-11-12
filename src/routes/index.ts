@@ -22,6 +22,8 @@ import notificationsRouter from "./notifications";
 import rolesRouter from "./roles";
 import rolePrivilegesRouter from "./role_privileges";
 import userRolesRouter from "./user_roles";
+import menusRouter from "./menus";
+import roleMenusRouter from "./role_menus";
 
 const router = Router();
 
@@ -70,6 +72,8 @@ router.use("/notifications", notificationsRouter);
 router.use("/class_teachers", authenticateSupabaseToken, classTeachersRouter);
 router.use("/roles", authenticateSupabaseToken, rolesRouter);
 router.use("/role_privileges", authenticateSupabaseToken, rolePrivilegesRouter);
+router.use("/menus", authenticateSupabaseToken, menusRouter);
+router.use("/role_menus", authenticateSupabaseToken, roleMenusRouter);
 router.use("/user_roles", userRolesRouter);
 
 export default router;

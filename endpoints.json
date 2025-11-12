@@ -474,6 +474,54 @@
       "description": "Delete a role privilege by ID",
       "route": "DELETE /api/v1/role_privileges/{id}"
     }
+  ],
+  "menus": [
+    {
+      "description": "Get all menus",
+      "route": "GET /api/v1/menus"
+    },
+    {
+      "description": "Create a new menu",
+      "route": "POST /api/v1/menus"
+    },
+    {
+      "description": "Get a menu by ID",
+      "route": "GET /api/v1/menus/{id}"
+    },
+    {
+      "description": "Update a menu by ID",
+      "route": "PUT /api/v1/menus/{id}"
+    },
+    {
+      "description": "Delete a menu by ID",
+      "route": "DELETE /api/v1/menus/{id}"
+    }
+  ],
+  "role_menus": [
+    {
+      "description": "Get all role menu assignments",
+      "route": "GET /api/v1/role_menus"
+    },
+    {
+      "description": "Create a role menu assignment",
+      "route": "POST /api/v1/role_menus"
+    },
+    {
+      "description": "Get a role menu assignment by ID",
+      "route": "GET /api/v1/role_menus/{id}"
+    },
+    {
+      "description": "Update a role menu assignment",
+      "route": "PUT /api/v1/role_menus/{id}"
+    },
+    {
+      "description": "Delete a role menu assignment",
+      "route": "DELETE /api/v1/role_menus/{id}"
+    },
+    {
+      "description": "Assign multiple menus to a role",
+      "route": "POST /api/v1/role_menus/bulk"
+    }
   ]
 }
 
