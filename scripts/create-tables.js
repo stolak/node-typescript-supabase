@@ -27,7 +27,28 @@ CREATE TABLE IF NOT EXISTS roles (
   updated_at timestamptz default now()
 );
 
+-- Menus
+CREATE TABLE IF NOT EXISTS menus (
+  id uuid primary key default gen_random_uuid(),
+  route text not null unique,
+  caption text not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+-- Role Menus
+CREATE TABLE IF NOT EXISTS role_menus (
+  id uuid primary key default gen_random_uuid(),
+  role_code text not null references roles(code) ON DELETE CASCADE,
+  menu_id uuid not null references menus(id) ON DELETE CASCADE,
+  unique (role_code, menu_id)
+);
 
+-- User Roles
+CREATE TABLE IF NOT EXISTS user_roles (
+  user_id uuid not null references auth.users(id) ON DELETE CASCADE,
+  role_id text not null references roles(code) ON DELETE CASCADE,
+  primary key (user_id, role_id)
+);
 
 -- Role Privileges
 CREATE TABLE IF NOT EXISTS role_privileges (
@@ -254,13 +275,6 @@ CREATE TABLE IF NOT EXISTS student_inventory_log (
   created_by uuid not null references auth.users(id) ON DELETE RESTRICT,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
-);
-
--- User Roles
-CREATE TABLE IF NOT EXISTS user_roles (
-  user_id uuid not null references auth.users(id) ON DELETE CASCADE,
-  role_id text not null references roles(code) ON DELETE CASCADE,
-  primary key (user_id, role_id)
 );
 
 -- Inventory Summary View
