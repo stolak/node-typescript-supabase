@@ -7,6 +7,15 @@ const userId = process.env.SEED_USER_ID || 'd35495e7-3dd1-4dde-ab48-b98f6c25180e
 console.log("userId", userId);
 console.log("connectionString", connectionString);
 const seedData = {
+  // Roles
+  roles: [
+    { code: 'ADMIN', name: 'Administrator', status: 'active' },
+    { code: 'SUPER_ADMIN', name: 'Super Administrator', status: 'active' },
+    { code: 'CLASS_TEACHER', name: 'Class Teacher', status: 'active' },
+    { code: 'STORE_ATTENDANCE', name: 'Store Attendance', status: 'active' },
+    { code: 'SCHOOL_ADMIN', name: 'School Administrator', status: 'active' }
+  ],
+
   // Categories
   categories: [
     { name: 'Textbooks', description: 'Educational textbooks for various subjects' },
@@ -250,31 +259,31 @@ const seedData = {
     {
       email: 'teacher1@school.com',
       name: 'Ms. Alice Johnson',
-      role: 'class_teacher',
+      role: 'CLASS_TEACHER',
       status: 'active'
     },
     {
       email: 'teacher2@school.com',
       name: 'Mr. Bob Smith',
-      role: 'class_teacher',
+      role: 'CLASS_TEACHER',
       status: 'active'
     },
     {
       email: 'teacher3@school.com',
       name: 'Ms. Carol Davis',
-      role: 'class_teacher',
+      role: 'CLASS_TEACHER',
       status: 'active'
     },
     {
       email: 'teacher4@school.com',
       name: 'Mr. David Wilson',
-      role: 'class_teacher',
+      role: 'CLASS_TEACHER',
       status: 'active'
     },
     {
       email: 'teacher5@school.com',
       name: 'Ms. Emma Brown',
-      role: 'class_teacher',
+      role: 'CLASS_TEACHER',
       status: 'active'
     }
   ]
@@ -298,7 +307,18 @@ async function seedDatabase() {
     // Start transaction
     await client.query('BEGIN');
 
-    // 1. Seed Categories
+    // 1. Seed Roles
+    console.log("\n👤 Seeding roles...");
+    for (const role of seedData.roles) {
+      await client.query(`
+        INSERT INTO roles (code, name, status, created_at, updated_at)
+        VALUES ($1, $2, $3, NOW(), NOW())
+        ON CONFLICT (code) DO NOTHING
+      `, [role.code, role.name, role.status]);
+    }
+    console.log(`✅ Inserted ${seedData.roles.length} roles`);
+
+    // 2. Seed Categories
     console.log("\n📚 Seeding categories...");
     for (const category of seedData.categories) {
       await client.query(`
@@ -309,7 +329,7 @@ async function seedDatabase() {
     }
     console.log(`✅ Inserted ${seedData.categories.length} categories`);
 
-    // 2. Seed Sub-categories
+    // 3. Seed Sub-categories
     console.log("\n📖 Seeding sub-categories...");
     for (const subCategory of seedData.subCategories) {
       const categoryResult = await client.query(
@@ -327,7 +347,7 @@ async function seedDatabase() {
     }
     console.log(`✅ Inserted ${seedData.subCategories.length} sub-categories`);
 
-    // 3. Seed Brands
+    // 4. Seed Brands
     console.log("\n🏷️ Seeding brands...");
     for (const brand of seedData.brands) {
       await client.query(`
@@ -338,7 +358,7 @@ async function seedDatabase() {
     }
     console.log(`✅ Inserted ${seedData.brands.length} brands`);
 
-    // 4. Seed UOMs
+    // 5. Seed UOMs
     console.log("\n📏 Seeding units of measure...");
     for (const uom of seedData.uoms) {
       await client.query(`
@@ -349,7 +369,7 @@ async function seedDatabase() {
     }
     console.log(`✅ Inserted ${seedData.uoms.length} units of measure`);
 
-    // 5. Seed Suppliers
+    // 6. Seed Suppliers
     console.log("\n🏢 Seeding suppliers...");
     for (const supplier of seedData.suppliers) {
       await client.query(`
@@ -367,7 +387,7 @@ async function seedDatabase() {
     }
     console.log(`✅ Inserted ${seedData.suppliers.length} suppliers`);
 
-    // 6. Seed School Classes
+    // 7. Seed School Classes
     console.log("\n🏫 Seeding school classes...");
     for (const schoolClass of seedData.schoolClasses) {
       await client.query(`
@@ -378,7 +398,7 @@ async function seedDatabase() {
     }
     console.log(`✅ Inserted ${seedData.schoolClasses.length} school classes`);
 
-    // 7. Seed Academic Session Terms
+    // 8. Seed Academic Session Terms
     console.log("\n📅 Seeding academic session terms...");
     for (const term of seedData.academicSessionTerms) {
       await client.query(`
@@ -389,7 +409,7 @@ async function seedDatabase() {
     }
     console.log(`✅ Inserted ${seedData.academicSessionTerms.length} academic session terms`);
 
-    // 8. Seed Students
+    // 9. Seed Students
     console.log("\n👨‍🎓 Seeding students...");
     const classResult = await client.query('SELECT id FROM school_classes ORDER BY name LIMIT 1');
     const defaultClassId = classResult.rows[0]?.id;
@@ -411,7 +431,7 @@ async function seedDatabase() {
     }
     console.log(`✅ Inserted ${seedData.students.length} students`);
 
-    // 9. Seed Class Teachers
+    // 10. Seed Class Teachers
     console.log("\n👩‍🏫 Seeding class teachers...");
     const classes = await client.query('SELECT id FROM school_classes ORDER BY name');
 
@@ -430,7 +450,7 @@ async function seedDatabase() {
     }
     console.log(`✅ Inserted 1 class teacher`);
 
-    // 10. Seed Sample Inventory Items
+    // 11. Seed Sample Inventory Items
     console.log("\n📦 Seeding sample inventory items...");
     const mathCategory = await client.query("SELECT id FROM categories WHERE name = 'Textbooks'");
     const mathSubCategory = await client.query("SELECT id FROM sub_categories WHERE name = 'Mathematics'");
@@ -493,7 +513,7 @@ async function seedDatabase() {
     }
     console.log(`✅ Inserted ${sampleItems.length} sample inventory items`);
 
-    // 11. Seed Sample Inventory Transactions
+    // 12. Seed Sample Inventory Transactions
     console.log("\n💰 Seeding sample inventory transactions...");
     const items = await client.query('SELECT id FROM inventory_items LIMIT 3');
     const supplier = await client.query('SELECT id FROM suppliers LIMIT 1');
@@ -548,7 +568,7 @@ async function seedDatabase() {
     }
     console.log(`✅ Inserted ${sampleTransactions.length} sample inventory transactions`);
 
-    // 12. Seed Sample Class Inventory Entitlements
+    // 13. Seed Sample Class Inventory Entitlements
     console.log("\n🎓 Seeding sample class inventory entitlements...");
     const firstClass = await client.query('SELECT id FROM school_classes ORDER BY name LIMIT 1');
     const firstTerm = await client.query(
@@ -575,6 +595,7 @@ async function seedDatabase() {
 
     // Display summary
     console.log("\n📊 Seeding Summary:");
+    console.log(`- Roles: ${seedData.roles.length}`);
     console.log(`- Categories: ${seedData.categories.length}`);
     console.log(`- Sub-categories: ${seedData.subCategories.length}`);
     console.log(`- Brands: ${seedData.brands.length}`);

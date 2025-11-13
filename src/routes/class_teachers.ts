@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { supabase } from "../supabaseClient";
+import { createUser } from "../services/userService";
 
 const router = Router();
 
@@ -80,29 +81,30 @@ router.post("/", async (req: Request, res: Response) => {
       .json({ error: "Class teacher with this email already exists" });
   }
   // Create user in auth
-  const { data: newUser, error: createUserError } =
-    await supabase.auth.admin.createUser({
-      email: body.email,
-      password: body.password || "123456",
-      user_metadata: { name: body.name, roles: ["TEACHER"] },
-      email_confirm: true, // <-- auto-confirm email so user can sign in immediately
-    });
+  const { data, error: createUserError } = await createUser({
+    email: body.email,
+    password: body.password || "123456",
+    name: body.name,
+    role_code: body.role || "CLASS_TEACHER",
+  });
   if (createUserError) {
-    return res.status(500).json({ error: createUserError.message });
+    return res.status(500).json({ error: createUserError });
   }
   // Insert class_teacher
   const insertBody = {
     ...body,
-    teacher_id: newUser.user.id,
+    teacher_id: data.id,
     created_by: req.user?.id,
   };
-  const { data, error } = await supabase
-    .from("class_teachers")
-    .insert([insertBody])
-    .select()
-    .single();
-  if (error) return res.status(500).json({ error: error.message });
-  res.status(201).json(data);
+  const { data: classTeacherData, error: classTeacherInsertError } =
+    await supabase
+      .from("class_teachers")
+      .insert([insertBody])
+      .select()
+      .single();
+  if (classTeacherError)
+    return res.status(500).json({ error: classTeacherInsertError });
+  res.status(201).json(classTeacherData);
 });
 
 /**
@@ -236,7 +238,7 @@ export default router;
  *           type: string
  *         role:
  *           type: string
- *           enum: [class_teacher, assistant_teacher, subject_teacher]
+ *           enum: [CLASS_TEACHER, ASSISTANT_TEACHER, SUBJECT_TEACHER]
  *         status:
  *           type: string
  *           enum: [active, inactive, archived]
@@ -270,7 +272,7 @@ export default router;
  *           type: string
  *         role:
  *           type: string
- *           enum: [class_teacher, assistant_teacher, subject_teacher]
+ *           enum: [CLASS_TEACHER, ASSISTANT_TEACHER, SUBJECT_TEACHER]
  *         status:
  *           type: string
  *           enum: [active, inactive, archived]

@@ -362,7 +362,6 @@ router.post(
         password,
         name,
         role_code,
-        email_confirm,
       });
 
       if (createError) {
