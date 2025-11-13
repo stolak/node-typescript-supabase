@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { authenticateSupabaseToken, getUser } from "../middleware/auth";
 import fetch from "node-fetch";
 import { supabase } from "../supabaseClient";
+import { getUserRolesAndPermissions } from "../services/userService";
 
 const router = Router();
 /**
@@ -66,57 +67,13 @@ router.post("/login", async (req: Request, res: Response) => {
     }
 
     const id = data.user.id;
-    const { data: userRolesData, error: userRolesError } = await supabase
-      .from("user_roles")
-      .select(
-        `
-        user_id,
-        role_code,
-        role:roles(
-          code,
-          name,
-          status,
-          privileges:role_privileges(
-            id,
-            description,
-            status,
-            created_at,
-            updated_at
-          ),
-          menus:role_menus(
-            id,
-            menu_id,
-            menu:menus(
-              id,
-              route,
-              caption
-            )
-          )
-         
-        )
-      `
-      )
-      .eq("user_id", String(id));
-    if (userRolesError) {
-      return res.status(500).json({ error: userRolesError.message });
+    const { data: rolesData, error: rolesError } =
+      await getUserRolesAndPermissions(id);
+    if (rolesError) {
+      return res.status(500).json({ error: rolesError });
     }
-    let menus: Array<{ caption: string; route: string }> = [];
-    let privileges: Array<{ description: string; status: string }> = [];
-    if (userRolesData?.length > 0) {
-      const role = Array.isArray(userRolesData[0].role)
-        ? userRolesData[0].role[0]
-        : userRolesData[0].role;
-      menus =
-        role?.menus?.map((item: any) => ({
-          caption: item.menu?.caption,
-          route: item.menu?.route,
-        })) || [];
-      privileges =
-        role?.privileges?.map((item: any) => ({
-          description: item.description,
-          status: item.status,
-        })) || [];
-    }
+    const menus = rolesData?.menus || [];
+    const privileges = rolesData?.privileges || [];
 
     const { data: teacherData, error: teacherError } = await supabase
       .from("class_teachers")

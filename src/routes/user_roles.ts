@@ -128,7 +128,7 @@ router
     const { data, error } = await supabase
       .from("user_roles")
       .upsert([{ user_id, role_code }], {
-        onConflict: "user_id,role_code",
+        onConflict: "user_id",
       })
       .select(
         `
