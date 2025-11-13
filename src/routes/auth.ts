@@ -2,7 +2,10 @@ import { Router, Request, Response } from "express";
 import { authenticateSupabaseToken, getUser } from "../middleware/auth";
 import fetch from "node-fetch";
 import { supabase } from "../supabaseClient";
-import { getUserRolesAndPermissions } from "../services/userService";
+import {
+  getUserRolesAndPermissions,
+  createUser,
+} from "../services/userService";
 
 const router = Router();
 /**
@@ -298,4 +301,84 @@ router.get(
   }
 );
 
+/**
+ * @openapi
+ * /api/v1/auth/create-user:
+ *   post:
+ *     summary: Create a new user
+ *     tags:
+ *       - Auth
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 description: Optional password (defaults to "123456" if not provided)
+ *               name:
+ *                 type: string
+ *                 description: Optional user name
+ *               role_code:
+ *                 type: string
+ *                 description: Optional role code
+ *               email_confirm:
+ *                 type: boolean
+ *                 description: Whether to auto-confirm email (defaults to true)
+ *     responses:
+ *       200:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       400:
+ *         description: Bad request - missing required fields
+ *       500:
+ *         description: Failed to create user
+ */
+router.post(
+  "/create-user",
+  authenticateSupabaseToken,
+  async (req: Request, res: Response) => {
+    const { email, password, name, role_code, email_confirm } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    try {
+      const { data, error: createError } = await createUser({
+        email,
+        password,
+        name,
+        role_code,
+        email_confirm,
+      });
+
+      if (createError) {
+        return res.status(500).json({ error: createError });
+      }
+
+      res.status(201).json({
+        message: "User created successfully",
+        user: data,
+      });
+    } catch (err) {
+      console.error("Error creating user:", err);
+      res.status(500).json({
+        error: err instanceof Error ? err.message : "Failed to create user",
+      });
+    }
+  }
+);
 export default router;

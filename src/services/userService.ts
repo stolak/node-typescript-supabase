@@ -15,6 +15,14 @@ export interface UserRolesData {
   privileges: UserPrivilege[];
 }
 
+export interface CreateUserParams {
+  email: string;
+  password?: string;
+  name?: string;
+  role_code?: string;
+  email_confirm?: boolean;
+}
+
 /**
  * Fetches user roles, menus, and privileges for a given user ID
  * @param userId - The user ID to fetch roles for
@@ -86,6 +94,56 @@ export async function getUserRolesAndPermissions(
     };
   } catch (err) {
     console.error("Error fetching user roles and permissions:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Unknown error occurred",
+    };
+  }
+}
+
+/**
+ * Creates a new user in Supabase Auth
+ * @param params - User creation parameters
+ * @returns Object containing the created user data or error
+ */
+export async function createUser(
+  params: CreateUserParams
+): Promise<{ data: any | null; error: string | null }> {
+  try {
+    const { email, password, name, role_code, email_confirm = true } = params;
+
+    if (!email) {
+      return { data: null, error: "Email is required" };
+    }
+
+    const { data: newUser, error: createUserError } =
+      await supabase.auth.admin.createUser({
+        email,
+        password: password || "123456",
+        user_metadata: {
+          ...(name && { name }),
+          ...(role_code && { roles: [role_code] }),
+        },
+        app_metadata: {
+          ...(role_code && { roles: [role_code] }),
+        },
+        email_confirm,
+      });
+
+    if (createUserError) {
+      return { data: null, error: createUserError.message };
+    }
+    await supabase
+      .from("user_roles")
+      .upsert([{ user_id: newUser.user?.id, role_code: role_code }], {
+        onConflict: "user_id",
+      });
+    return {
+      data: newUser.user,
+      error: null,
+    };
+  } catch (err) {
+    console.error("Error creating user:", err);
     return {
       data: null,
       error: err instanceof Error ? err.message : "Unknown error occurred",
