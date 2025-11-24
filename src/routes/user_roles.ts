@@ -151,6 +151,7 @@ router
       .single();
     await supabase.auth.admin.updateUserById(user_id, {
       app_metadata: { roles: [role_code] },
+      user_metadata: { roles: [role_code] },
     });
 
     if (error) {
