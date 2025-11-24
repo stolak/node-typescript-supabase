@@ -234,6 +234,7 @@ CREATE TABLE IF NOT EXISTS inventory_transactions (
   in_cost numeric(12,2) default 0,
   qty_out numeric(12,2) default 0,
   out_cost numeric(12,2) default 0,
+  amount_paid numeric(12,2) default 0,
   status text not null default 'pending' check (status in ('pending','cancelled','deleted','completed')),
   reference_no text,
   notes text,

@@ -98,7 +98,7 @@ router.get("/", async (_req: Request, res: Response) => {
 router.post("/", async (req: Request, res: Response) => {
   const body = req.body;
   const amount_paid = Number(body.amount_paid) || 0;
-  delete body.amount_paid;
+
   if (amount_paid > 0 && !body.supplier_id) {
     return res
       .status(400)

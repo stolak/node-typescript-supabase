@@ -9,18 +9,26 @@ const supplierTransactionsService = new SupplierTransactionsService();
  * @openapi
  * /api/v1/suppliers:
  *   get:
- *     summary: Get all suppliers
+ *     summary: Get all suppliers with their balances
+ *     description: Returns a list of all suppliers including their calculated balance (credit - debit)
  *     tags:
  *       - Suppliers
  *     responses:
  *       200:
- *         description: List of suppliers
+ *         description: List of suppliers with balances
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/Supplier'
+ *                 allOf:
+ *                   - $ref: '#/components/schemas/Supplier'
+ *                   - type: object
+ *                     properties:
+ *                       balance:
+ *                         type: number
+ *                         format: numeric
+ *                         description: Calculated balance (credit - debit). Positive means supplier owes us, negative means we owe supplier.
  *   post:
  *     summary: Create a new supplier
  *     tags:
@@ -63,9 +71,34 @@ const supplierTransactionsService = new SupplierTransactionsService();
  *               $ref: '#/components/schemas/Supplier'
  */
 router.get("/", async (_req: Request, res: Response) => {
-  const { data, error } = await supabase.from("suppliers").select("*");
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+  try {
+    // Get all suppliers
+    const { data: suppliers, error: suppliersError } = await supabase
+      .from("suppliers")
+      .select("*")
+      .order("name");
+
+    if (suppliersError) {
+      return res.status(500).json({ error: suppliersError.message });
+    }
+
+    // Get supplier balances
+    const balances = await supplierTransactionsService.getSupplierBalances();
+
+    // Create a map of supplier_id to balance for quick lookup
+    const balanceMap = new Map(balances.map((b) => [b.supplier_id, b.balance]));
+
+    // Merge suppliers with their balances
+    const suppliersWithBalance = (suppliers || []).map((supplier: any) => ({
+      ...supplier,
+      balance: balanceMap.get(supplier.id) || 0,
+    }));
+
+    res.json(suppliersWithBalance);
+  } catch (error: any) {
+    console.error("Error fetching suppliers:", error);
+    res.status(500).json({ error: error.message || "Internal server error" });
+  }
 });
 
 router.post("/", async (req: Request, res: Response) => {
@@ -326,6 +359,10 @@ export default router;
  *         updated_at:
  *           type: string
  *           format: date-time
+ *         balance:
+ *           type: number
+ *           format: numeric
+ *           description: Calculated balance (credit - debit). Positive means supplier owes us, negative means we owe supplier.
  *     SupplierBalance:
  *       type: object
  *       properties:
