@@ -29,7 +29,43 @@ const router = Router();
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/ClassTeacherInput'
+ *             type: object
+ *             required:
+ *               - email
+ *               - name
+ *             properties:
+ *               class_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: Optional class ID to assign the teacher to
+ *                 example: "f0639527-fec7-49bf-996a-c779b066e9a7"
+ *               name:
+ *                 type: string
+ *                 description: Teacher's full name
+ *                 example: "John Doe"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Teacher's email address (must be unique)
+ *                 example: "example@example.com"
+ *               role:
+ *                 type: string
+ *                 description: Teacher role (defaults to CLASS_TEACHER if not provided)
+ *                 enum: [CLASS_TEACHER, ASSISTANT_TEACHER, SUBJECT_TEACHER]
+ *                 default: CLASS_TEACHER
+ *                 example: "CLASS_TEACHER"
+ *               status:
+ *                 type: string
+ *                 description: Teacher status (defaults to active if not provided)
+ *                 enum: [active, inactive, archived]
+ *                 default: active
+ *                 example: "active"
+ *           example:
+ *             class_id: "f0639527-fec7-49bf-996a-c779b066e9a7"
+ *             name: "John Doe"
+ *             email: "example@example.com"
+ *             role: "CLASS_TEACHER"
+ *             status: "active"
  *     responses:
  *       201:
  *         description: Class teacher created
@@ -37,6 +73,16 @@ const router = Router();
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ClassTeacher'
+ *       400:
+ *         description: Bad request - missing required fields or duplicate email
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "email and name are required"
  */
 router.get("/", async (_req: Request, res: Response) => {
   const { data, error } = await supabase.from("class_teachers").select(`
@@ -91,18 +137,24 @@ router.post("/", async (req: Request, res: Response) => {
     return res.status(500).json({ error: createUserError });
   }
   // Insert class_teacher
+  delete body.password;
+  delete body.role;
+
   const insertBody = {
-    ...body,
+    class_id: body.class_id,
+    name: body.name,
+    email: body.email,
     teacher_id: data.id,
     created_by: req.user?.id,
   };
+  console.log(insertBody);
   const { data: classTeacherData, error: classTeacherInsertError } =
     await supabase
       .from("class_teachers")
       .insert([insertBody])
       .select()
       .single();
-  if (classTeacherError)
+  if (classTeacherInsertError)
     return res.status(500).json({ error: classTeacherInsertError });
   res.status(201).json(classTeacherData);
 });
@@ -259,30 +311,35 @@ export default router;
  *       required:
  *         - email
  *         - name
- *         - role
- *         - status
- 
  *       properties:
  *         class_id:
  *           type: string
  *           format: uuid
+ *           description: Optional class ID to assign the teacher to
+ *           example: "f0639527-fec7-49bf-996a-c779b066e9a7"
  *         name:
  *           type: string
+ *           description: Teacher's full name
+ *           example: "dfdfdfee"
  *         email:
  *           type: string
+ *           format: email
+ *           description: Teacher's email address (must be unique)
+ *           example: "string@hhreeh.comerrggr"
  *         role:
  *           type: string
+ *           description: Teacher role (defaults to CLASS_TEACHER if not provided)
  *           enum: [CLASS_TEACHER, ASSISTANT_TEACHER, SUBJECT_TEACHER]
+ *           default: CLASS_TEACHER
+ *           example: "CLASS_TEACHER"
  *         status:
  *           type: string
+ *           description: Teacher status (defaults to active if not provided)
  *           enum: [active, inactive, archived]
- *         assigned_at:
+ *           default: active
+ *           example: "active"
+ *         password:
  *           type: string
- *           format: date-time
- *         unassigned_at:
- *           type: string
- *           format: date-time
- *         created_by:
- *           type: string
- *           format: uuid
+ *           description: Optional password for the user account (defaults to "123456" if not provided)
+ *           writeOnly: true
  */
