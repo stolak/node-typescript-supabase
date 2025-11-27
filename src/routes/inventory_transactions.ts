@@ -161,7 +161,6 @@ router.post("/", async (req: Request, res: Response) => {
       `*, inventory_items(id, name, categories(id, name)), suppliers(id, name)`
     )
     .single();
-
   if (error) return res.status(500).json({ error: error.message });
   if (
     body.transaction_type === "purchase" &&
@@ -171,6 +170,7 @@ router.post("/", async (req: Request, res: Response) => {
     //record amount paid as supplier transaction
     supplierTransactionsService.create({
       supplier_id: body?.supplier_id,
+      transaction_date: body?.transaction_date || new Date().toISOString(),
       credit: body?.in_cost,
       debit: 0,
       reference_no: data.id,
@@ -185,6 +185,7 @@ router.post("/", async (req: Request, res: Response) => {
       supplier_id: body?.supplier_id,
       credit: 0,
       debit: amount_paid,
+      transaction_date: body?.transaction_date || new Date().toISOString(),
       reference_no: data.id,
       notes: `Payment for purchase transaction ${data.id}`,
       created_by: req.user?.id || body.created_by || "",
