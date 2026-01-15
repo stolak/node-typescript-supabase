@@ -20,7 +20,12 @@ DROP TABLE IF EXISTS
   uoms,
   brands,
   sub_categories,
-  categories
+  categories,
+  roles,
+  role_menus,
+  user_roles,
+  role_privileges
+  menus
 CASCADE;
 `;
 

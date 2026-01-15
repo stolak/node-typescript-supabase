@@ -10,7 +10,9 @@
     "migrate:drop": "node scripts/drop-tables.js",
     "migrate:alter": "node scripts/migrate-alter.js",
     "migrate:teachers": "node scripts/create-missing-teachers.js",
-    "seed": "node scripts/seed-data.js"
+    "seed": "node scripts/seed-data.js",
+    "seed:live": "node scripts/seed-live-data.js",
+    "seed:inventory-items": "node scripts/seed-inventory-items.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.7",
